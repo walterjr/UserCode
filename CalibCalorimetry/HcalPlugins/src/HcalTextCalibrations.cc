@@ -142,7 +142,7 @@ HcalTextCalibrations::HcalTextCalibrations ( const edm::ParameterSet& iConfig )
     else {
       std::cerr << "HcalTextCalibrations-> Unknown object name '" << objectName 
 		<< "', known names are: "
-		<< "Pedestals PedestalWidths Gains GainWidths QIEData /*QIEType*/ ChannelQuality ElectronicsMap "
+		<< "Pedestals PedestalWidths Gains GainWidths QIEData QIEType ChannelQuality ElectronicsMap "
 		<< "ZSThresholds RespCorrs LUTCorrs PFCorrs TimeCorrs L1TriggerObjects "
 		<< "ValidationCorrs LutMetadata DcsValues DcsMap CholeskyMatrices CovarianceMatrices "
 		<< "RecoParams LongRecoParams ZDCLowGainFraction FlagHFDigiTimeParams MCParams "
