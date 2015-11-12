@@ -46,6 +46,8 @@ namespace HcalDbASCIIIO {
   bool dumpObject (std::ostream& fOutput, const HcalGainWidths& fObject);
   bool getObject (std::istream& fInput, HcalQIEData* fObject);
   bool dumpObject (std::ostream& fOutput, const HcalQIEData& fObject);
+  bool getObject (std::istream& fInput, HcalQIEType* fObject);
+  bool dumpObject (std::ostream& fOutput, const HcalQIEType& fObject);
   bool getObject (std::istream& fInput, HcalCalibrationQIEData* fObject);
   bool dumpObject (std::ostream& fOutput, const HcalCalibrationQIEData& fObject);
   bool getObject (std::istream& fInput, HcalElectronicsMap* fObject);

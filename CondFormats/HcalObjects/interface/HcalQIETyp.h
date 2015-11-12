@@ -4,7 +4,7 @@
 #include "CondFormats/Serialization/interface/Serializable.h"
 
 /*
-\class HcalRespCorr
+\class HcalQIETyp
 \author Walter Alda 
 contains the QIE Type + corresponding DetId
 */

@@ -17,6 +17,7 @@ HcalDbService::HcalDbService (const edm::ParameterSet& cfg):
   mPedestals (0), mPedestalWidths (0),
   mGains (0), mGainWidths (0),  
   mQIEData(0),
+//  mQIEType(0),
   mElectronicsMap(0),
   mRespCorrs(0),
   mL1TriggerObjects(0),
@@ -31,6 +32,7 @@ const HcalTopology* HcalDbService::getTopologyUsed() const {
   if (mPedestals && mPedestals->topo()) return mPedestals->topo();
   if (mGains && mGains->topo()) return mGains->topo();
   if (mRespCorrs && mRespCorrs->topo()) return mRespCorrs->topo();
+//  if (mQIEType && mQIEType->topo()) return mQIEType->topo();
   if (mL1TriggerObjects && mL1TriggerObjects->topo()) return mL1TriggerObjects->topo();
   if (mLutMetadata && mLutMetadata->topo()) return mLutMetadata->topo();
   return 0;
@@ -51,7 +53,7 @@ const HcalCalibrationWidths& HcalDbService::getHcalCalibrationWidths(const HcalG
 
 void HcalDbService::buildCalibrations() const {
   // we use the set of ids for pedestals as the master list
-  if ((!mPedestals) || (!mGains) || (!mQIEData) || (!mRespCorrs) || (!mTimeCorrs) || (!mLUTCorrs) ) return;
+  if ((!mPedestals) || (!mGains) || (!mQIEData) || /*(!mQIEType) ||*/ (!mRespCorrs) || (!mTimeCorrs) || (!mLUTCorrs) ) return;
 
   if (!mCalibSet.load(std::memory_order_acquire)) {
 
@@ -187,6 +189,13 @@ const HcalRespCorr* HcalDbService::getHcalRespCorr (const HcalGenericDetId& fId)
   }
   return 0;
 }
+
+/*const HcalQIETyp* HcalDbService::getHcalQIETyp (const HcalGenericDetId& fId) const {
+  if (mQIEType) {
+    return mQIEType->getValues (fId);
+  }
+  return 0;
+}*/
 
 const HcalPedestal* HcalDbService::getPedestal (const HcalGenericDetId& fId) const {
   if (mPedestals) {

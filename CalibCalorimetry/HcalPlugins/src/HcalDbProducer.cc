@@ -54,6 +54,7 @@ HcalDbProducer::HcalDbProducer( const edm::ParameterSet& fConfig)
 			  &HcalDbProducer::PFCorrsCallback &
 			  &HcalDbProducer::timeCorrsCallback &
 			  &HcalDbProducer::QIEDataCallback &
+//                          &HcalDbProducer::QIETypeCallback &
 			  &HcalDbProducer::gainWidthsCallback &
 			  &HcalDbProducer::channelQualityCallback &
 			  &HcalDbProducer::zsThresholdsCallback &
@@ -201,6 +202,24 @@ void HcalDbProducer::QIEDataCallback (const HcalQIEDataRcd& fRecord) {
     HcalDbASCIIIO::dumpObject (*mDumpStream, *(mQIEData));
   }
 }
+
+/*void HcalDbProducer::QIETypeCallback (const HcalQIETypeRcd& fRecord) {
+  edm::ESTransientHandle <HcalQIEType> item;
+  fRecord.get (item);
+
+  mQIEType.reset( new HcalQIEType(*item) );
+
+  edm::ESHandle<HcalTopology> htopo;
+  fRecord.getRecord<HcalRecNumberingRecord>().get(htopo);
+  const HcalTopology* topo=&(*htopo);
+  mQIEType->setTopo(topo);
+
+  mService->setData (mQIEType.get());
+  if (std::find (mDumpRequest.begin(), mDumpRequest.end(), std::string ("QIEType")) != mDumpRequest.end()) {
+    *mDumpStream << "New HCAL QIEType set" << std::endl;
+    HcalDbASCIIIO::dumpObject (*mDumpStream, *(mQIEType));
+  }
+}*/
 
 void HcalDbProducer::channelQualityCallback (const HcalChannelQualityRcd& fRecord) {
   edm::ESHandle <HcalChannelQuality> item;

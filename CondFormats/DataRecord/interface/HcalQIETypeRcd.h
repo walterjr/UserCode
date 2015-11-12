@@ -1,8 +1,8 @@
-#ifndef HcalQIETypeRcd_H
-#define HcalQIETypeRcd_H
+#ifndef DataRecord_HcalQIETypeRcd_H
+#define DataRecord_HcalQIETypeRcd_H
 // -*- C++ -*-
 //
-// Package:     QIEType
+// Package:     DataRecord
 // Class  :     HcalQIETypeRcd
 // 
 /**\class HcalQIETypeRcd HcalQIETypeRcd.h CondFormats/DataRecord/interface/HcalQIETypeRcd.h

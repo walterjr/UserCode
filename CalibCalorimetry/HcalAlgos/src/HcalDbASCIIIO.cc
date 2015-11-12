@@ -386,6 +386,9 @@ bool HcalDbASCIIIO::dumpObject (std::ostream& fOutput, const HcalCholeskyMatrice
 bool HcalDbASCIIIO::getObject (std::istream& fInput, HcalCovarianceMatrices* fObject) {return getHcalMatrixObject (fInput, fObject, new HcalCovarianceMatrix); }
 bool HcalDbASCIIIO::dumpObject (std::ostream& fOutput, const HcalCovarianceMatrices& fObject) {return dumpHcalMatrixObject (fOutput, fObject); }
 
+bool HcalDbASCIIIO::getObject (std::istream& fInput, HcalQIEType* fObject) {return getHcalSingleIntObject (fInput, fObject, new HcalQIETyp); }
+bool HcalDbASCIIIO::dumpObject (std::ostream& fOutput, const HcalQIEType& fObject) {return dumpHcalSingleIntObject (fOutput, fObject); }
+
 
 // ------------------------------ start specific implementations ------------------------------
 bool HcalDbASCIIIO::getObject (std::istream& fInput, HcalRecoParams* fObject)
