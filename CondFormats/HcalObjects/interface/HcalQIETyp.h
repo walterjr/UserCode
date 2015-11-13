@@ -13,7 +13,7 @@ class HcalQIETyp
 {
  public:
   HcalQIETyp(): mId(0), mValue(0) {}
-  HcalQIETyp(uint32_t fid, int value): mId(fid), mValue(value) {}
+  HcalQIETyp(unsigned long fid, int value): mId(fid), mValue(value) {}
 
   uint32_t rawId() const {return mId;}
 
