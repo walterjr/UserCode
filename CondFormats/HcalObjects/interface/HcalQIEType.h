@@ -22,7 +22,7 @@ class HcalQIEType: public HcalCondObjectContainer<HcalQIETyp>
 #endif
   HcalQIEType(const HcalTopology* topo):HcalCondObjectContainer<HcalQIETyp>(topo) {}
 
-  std::string myname() const {return (std::string)"HcalRespCorrs";}
+  std::string myname() const {return (std::string)"HcalQIEType";}
 
  private:
 
