@@ -8,11 +8,6 @@ ctppsFastProtonSimulation = cms.EDProducer('CTPPSFastProtonSimulation',
 
     beamConditions = lhcBeamConditions_2016PreTS2,
 
-    # TODO: remove
-    # crossing angle
-    #halfCrossingAngleSector45 = cms.double(179.394e-6), # in rad
-    #halfCrossingAngleSector56 = cms.double(191.541e-6), # in rad
-
     opticsFileBeam1 = cms.FileInPath('CondFormats/CTPPSOpticsObjects/data/2016_preTS2/version4-vale1/beam1/parametrization_6500GeV_0p4_185_reco.root'),
     opticsFileBeam2 = cms.FileInPath('CondFormats/CTPPSOpticsObjects/data/2016_preTS2/version4-vale1/beam2/parametrization_6500GeV_0p4_185_reco.root'),
 
