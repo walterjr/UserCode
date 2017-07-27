@@ -66,9 +66,10 @@ class CTPPSFastProtonSimulation : public edm::stream::EDProducer<>
     virtual void produce( edm::Event&, const edm::EventSetup& ) override;
 
     void transportProton(const HepMC::GenVertex* in_vtx, const HepMC::GenParticle* in_trk,
-      std::vector<CTPPSLocalTrackLite> &out_tracks, edm::DetSetVector<TotemRPRecHit>& out_hits) const;
+      const TotemRPGeometry &geometry, std::vector<CTPPSLocalTrackLite> &out_tracks, edm::DetSetVector<TotemRPRecHit>& out_hits) const;
 
-    bool produceRecHit( const CLHEP::Hep3Vector& coord_global, const CTPPSDetId& detid, TotemRPRecHit& rechit ) const;
+    bool produceRecHit(const CLHEP::Hep3Vector& coord_global, unsigned int detid,
+      const TotemRPGeometry &geometry, TotemRPRecHit& rechit) const;
 
     // ------------ config file parameters ------------
 
@@ -107,9 +108,6 @@ class CTPPSFastProtonSimulation : public edm::stream::EDProducer<>
 
     /// internal variable: v position of strip 0, in mm
     double stripZeroPosition_;
-
-    // TODO: doesn't need to be class member
-    edm::ESHandle<TotemRPGeometry> geometry_;
 
     static const bool invertBeamCoordinatesSystem_;
 };
@@ -180,25 +178,6 @@ CTPPSFastProtonSimulation::~CTPPSFastProtonSimulation()
 
 void CTPPSFastProtonSimulation::beginRun( const edm::Run&, const edm::EventSetup& iSetup )
 {
-  // get geometry
-  iSetup.get<VeryForwardMisalignedGeometryRecord>().get( geometry_ );
-
-  std::ostringstream os;
-  for ( const auto& rp : pots_ )
-  {
-    std::vector<CTPPSDetId>& list = strips_list_[rp.detid.rawId()];
-    os << "\npot " << rp.detid << ":";
-    for ( TotemRPGeometry::mapType::const_iterator it=geometry_->beginDet(); it!=geometry_->endDet(); ++it )
-    {
-      const CTPPSDetId detid( it->first );
-      if ( detid.getRPId()!=rp.detid )
-        continue;
-      list.push_back( detid );
-      os << "\n* " << TotemRPDetId( detid );
-    }
-  }
-
-  edm::LogWarning("CTPPSFastProtonSimulation::beginRun") << "Hierarchy of DetIds for each pot" << os.str();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -209,6 +188,10 @@ CTPPSFastProtonSimulation::produce( edm::Event& iEvent, const edm::EventSetup& i
   // get input
   edm::Handle<edm::HepMCProduct> hepmc_prod;
   iEvent.getByToken( hepMCToken_, hepmc_prod );
+
+  // get geometry
+  edm::ESHandle<TotemRPGeometry> geometry;
+  iSetup.get<VeryForwardMisalignedGeometryRecord>().get(geometry);
 
   // prepare outputs
   std::unique_ptr< edm::DetSetVector<TotemRPRecHit> > pRecHits( new edm::DetSetVector<TotemRPRecHit>() );
@@ -231,7 +214,7 @@ CTPPSFastProtonSimulation::produce( edm::Event& iEvent, const edm::EventSetup& i
       if ( part->status()!=1 && part->status()<83 )
         continue;
 
-      transportProton(vtx, part, *pTracks, *pRecHits);
+      transportProton(vtx, part, *geometry, *pTracks, *pRecHits);
     }
   }
 
@@ -241,12 +224,12 @@ CTPPSFastProtonSimulation::produce( edm::Event& iEvent, const edm::EventSetup& i
 //----------------------------------------------------------------------------------------------------
 
 void CTPPSFastProtonSimulation::transportProton(const HepMC::GenVertex* in_vtx, const HepMC::GenParticle* in_trk,
-  std::vector<CTPPSLocalTrackLite> &out_tracks, edm::DetSetVector<TotemRPRecHit>& out_hits) const
+  const TotemRPGeometry &geometry, std::vector<CTPPSLocalTrackLite> &out_tracks, edm::DetSetVector<TotemRPRecHit>& out_hits) const
 {
   /// xi is positive for diffractive protons, thus proton momentum p = (1-xi) * p_nom
   /// horizontal component of proton momentum: p_x = th_x * (1-xi) * p_nom
   
-  // TODO: the code below uses the TOTEM/LHC convention for momentum coordinates. It is to be changed to the CMS one.
+  // TODO: the code below uses the TOTEM/LHC convention for momentum coordinates. FIXME: It is to be changed to the CMS one.
 
   const HepMC::FourVector vtx = in_vtx->position();
   const HepMC::FourVector mom = in_trk->momentum();
@@ -321,12 +304,15 @@ void CTPPSFastProtonSimulation::transportProton(const HepMC::GenVertex* in_vtx, 
     if (!produceRecHits_)
       continue;
 
-    // TODO: replace by a method from TotemRPGeometry ?
-    // retrieve the sensor from geometry
-    for ( const auto& detid : strips_list_.at( rp.detid.rawId() ) )
+    // loop over all sensors in the RP
+    auto it = geometry.getDetsInRP().find(rp.detid);
+    if (it == geometry.getDetsInRP().end())
+      continue;
+
+    for (const auto& detid : it->second)
     {
       // get sensor geometry
-      const double gl_o_z = geometry_->LocalToGlobal( detid, CLHEP::Hep3Vector() ).z(); // in mm
+      const double gl_o_z = geometry.LocalToGlobal( detid, CLHEP::Hep3Vector() ).z(); // in mm
 
       // evaluate positions (in mm) of track and beam
       const double de_z = (gl_o_z - approximator_z) * z_sign;
@@ -344,7 +330,7 @@ void CTPPSFastProtonSimulation::transportProton(const HepMC::GenVertex* in_vtx, 
 
       // make hit (if within acceptance)
       TotemRPRecHit hit; // all coordinates in mm
-      if ( produceRecHit( h_glo, detid, hit ) )
+      if ( produceRecHit(h_glo, detid, geometry, hit) )
       {
         edm::DetSet<TotemRPRecHit>& hits = out_hits.find_or_insert( detid );
         hits.push_back( hit );
@@ -355,10 +341,11 @@ void CTPPSFastProtonSimulation::transportProton(const HepMC::GenVertex* in_vtx, 
 
 //----------------------------------------------------------------------------------------------------
 
-bool CTPPSFastProtonSimulation::produceRecHit( const CLHEP::Hep3Vector& coord_global, const CTPPSDetId& detid, TotemRPRecHit& rechit ) const
+bool CTPPSFastProtonSimulation::produceRecHit(const CLHEP::Hep3Vector& coord_global, unsigned int detid,
+  const TotemRPGeometry &geometry, TotemRPRecHit& rechit) const
 {
   // transform hit global to local coordinates
-  const CLHEP::Hep3Vector h_loc = geometry_->GlobalToLocal( detid, coord_global );
+  const CLHEP::Hep3Vector h_loc = geometry.GlobalToLocal( detid, coord_global );
 
   double u = h_loc.x();
   double v = h_loc.y();
