@@ -299,9 +299,9 @@ void CTPPSFastProtonSimulation::transportProton(const HepMC::GenVertex* in_vtx, 
     if (produceScoringPlaneHits_)
     {
       if (produceHitsRelativeToBeam_)
-        out_tracks.emplace_back(rp.detid, b_x_tr - b_x_be, 0., b_y_tr - b_y_be, 0.);
+        out_tracks.emplace_back(rp.detid, (b_x_tr - b_x_be) * 1E3, 0., (b_y_tr - b_y_be) * 1E3, 0.);
       else
-        out_tracks.emplace_back(rp.detid, b_x_tr, 0., b_y_tr, 0.);
+        out_tracks.emplace_back(rp.detid, b_x_tr * 1E3, 0., b_y_tr * 1E3, 0.);
     }
 
     // stop if rec hits are not to be produced
