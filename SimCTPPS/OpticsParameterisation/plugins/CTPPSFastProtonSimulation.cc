@@ -218,7 +218,11 @@ CTPPSFastProtonSimulation::produce( edm::Event& iEvent, const edm::EventSetup& i
     }
   }
 
-  iEvent.put( std::move( pRecHits ) );
+  if (produceScoringPlaneHits_)
+    iEvent.put( std::move( pTracks ) );
+
+  if (produceRecHits_)
+    iEvent.put( std::move( pRecHits ) );
 }
 
 //----------------------------------------------------------------------------------------------------
