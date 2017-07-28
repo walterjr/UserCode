@@ -51,12 +51,11 @@ class CTPPSFastProtonSimulation : public edm::stream::EDProducer<>
   private:
     struct CTPPSPotInfo
     {
-      CTPPSPotInfo() : detid( 0 ), resolution( 0.0 ), z_position( 0.0 ), approximator( 0 ) {}
-      CTPPSPotInfo( const CTPPSDetId& det_id, double resol, double z_position, LHCOpticsApproximator* approx ) :
-        detid( det_id ), resolution( resol ), z_position( z_position ), approximator( approx ) {}
+      CTPPSPotInfo() : detid( 0 ), z_position( 0.0 ), approximator( 0 ) {}
+      CTPPSPotInfo( const CTPPSDetId& det_id, double z_position, LHCOpticsApproximator* approx ) :
+        detid( det_id ), z_position( z_position ), approximator( approx ) {}
 
       CTPPSDetId detid;
-      double resolution;
       double z_position;
       LHCOpticsApproximator* approximator;
     };
@@ -100,7 +99,7 @@ class CTPPSFastProtonSimulation : public edm::stream::EDProducer<>
 
     // ------------ internal parameters ------------
 
-    /// TODO
+    /// collection of RP information
     std::vector<CTPPSPotInfo> pots_;
 
     /// map: RP id -> vector of sensor ids
@@ -157,14 +156,13 @@ CTPPSFastProtonSimulation::CTPPSFastProtonSimulation( const edm::ParameterSet& i
   {
     const std::string interp_name = rp.getParameter<std::string>( "interpolatorName" );
     const unsigned int raw_detid = rp.getParameter<unsigned int>( "potId" );
-    const double det_resol = rp.getParameter<double>( "resolution" ); // TODO: remove
     const double z_position = rp.getParameter<double>( "zPosition" );
     CTPPSDetId detid( raw_detid );
 
     if ( detid.arm()==0 ) // sector 45 -- beam 2
-      pots_.emplace_back( detid, det_resol, z_position, dynamic_cast<LHCOpticsApproximator*>( f_in_optics_beam2->Get( interp_name.c_str() ) ) );
+      pots_.emplace_back( detid, z_position, dynamic_cast<LHCOpticsApproximator*>( f_in_optics_beam2->Get( interp_name.c_str() ) ) );
     if ( detid.arm()==1 ) // sector 56 -- beam 1
-      pots_.emplace_back( detid, det_resol, z_position, dynamic_cast<LHCOpticsApproximator*>( f_in_optics_beam1->Get( interp_name.c_str() ) ) );
+      pots_.emplace_back( detid, z_position, dynamic_cast<LHCOpticsApproximator*>( f_in_optics_beam1->Get( interp_name.c_str() ) ) );
   }
 }
 
@@ -260,11 +258,11 @@ void CTPPSFastProtonSimulation::transportProton(const HepMC::GenVertex* in_vtx, 
   for ( const auto& rp : pots_ )
   {
     // first check the arm
-    if ( rp.detid.arm() != arm)
+    if (rp.detid.arm() != arm)
       continue;
 
     // so far only works for strips
-    if ( rp.detid.subdetId() != CTPPSDetId::sdTrackingStrip )
+    if (rp.detid.subdetId() != CTPPSDetId::sdTrackingStrip)
       continue;
 
     // calculate kinematics for optics parametrisation
