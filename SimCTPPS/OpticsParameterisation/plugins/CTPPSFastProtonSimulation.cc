@@ -231,17 +231,20 @@ void CTPPSFastProtonSimulation::transportProton(const HepMC::GenVertex* in_vtx, 
   /// xi is positive for diffractive protons, thus proton momentum p = (1-xi) * p_nom
   /// horizontal component of proton momentum: p_x = th_x * (1-xi) * p_nom
   
-  // TODO: the code below uses the TOTEM/LHC convention for momentum coordinates. FIXME: It is to be changed to the CMS one.
+  // vectors in CMS convention
+  const HepMC::FourVector vtx_cms = in_vtx->position();
+  const HepMC::FourVector mom_cms = in_trk->momentum();
 
-  const HepMC::FourVector vtx = in_vtx->position();
-  const HepMC::FourVector mom = in_trk->momentum();
+  // transformation to LHC/TOTEM convention
+  HepMC::FourVector vtx_lhc(-vtx_cms.x(), vtx_cms.y(), -vtx_cms.z(), vtx_cms.t());
+  HepMC::FourVector mom_lhc(-mom_cms.x(), mom_cms.y(), -mom_cms.z(), mom_cms.t());
 
   // determine the LHC arm and related parameters
   unsigned int arm = 3;
   double half_cr_angle = 0.0, vtx_y_offset = 0.0;
   double z_sign;
 
-  if (mom.z() < 0)  // sector 45
+  if (mom_lhc.z() < 0)  // sector 45
   {
     arm = 0;
     z_sign = -1;
@@ -267,13 +270,13 @@ void CTPPSFastProtonSimulation::transportProton(const HepMC::GenVertex* in_vtx, 
 
     // calculate kinematics for optics parametrisation
     const double p0 = rp.approximator->GetBeamMomentum();
-    const double p = mom.rho();
+    const double p = mom_lhc.rho();
     const double xi = 1. - p / p0;
-    const double th_x_phys = mom.x() / p;
-    const double th_y_phys = mom.y() / p;
+    const double th_x_phys = mom_lhc.x() / p;
+    const double th_y_phys = mom_lhc.y() / p;
 
     // transport proton
-    double kin_tr_in[5] = { vtx.x()*1E-3, (th_x_phys + half_cr_angle) * (1.-xi), vtx.y()*1E-3 + vtx_y_offset, th_y_phys * (1.-xi), -xi };
+    double kin_tr_in[5] = { vtx_lhc.x()*1E-3, (th_x_phys + half_cr_angle) * (1.-xi), vtx_lhc.y()*1E-3 + vtx_y_offset, th_y_phys * (1.-xi), -xi };
     double kin_tr_out[5];
     bool proton_transported = rp.approximator->Transport(kin_tr_in, kin_tr_out, checkApertures_, invertBeamCoordinatesSystem_);
     const double b_x_tr = kin_tr_out[0], b_y_tr = kin_tr_out[2];
