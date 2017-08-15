@@ -29,3 +29,15 @@ cd - &> /dev/null
 cd "fast_simu_with_phys_generator/qgsjet/relative_to_beam"
 RunOne "test"
 cd - &> /dev/null
+
+#cd "rp_positions/with_particle_gun"
+#RunOne "test_with_margin_beg"
+#RunOne "test_without_margin_beg"
+#RunOne "test_without_margin_end"
+#cd - &> /dev/null
+
+cd "rp_positions/with_qgsjet"
+RunOne "test_with_margin_beg"
+RunOne "test_without_margin_beg"
+RunOne "test_without_margin_end"
+cd - &> /dev/null
