@@ -75,9 +75,6 @@ process.load("Validation.CTPPS.smearingValidator_cfi")
 process.smearingValidator.tagBeforeSmearing = cms.InputTag("generator", "unsmeared")
 process.smearingValidator.tagAfterSmearing = cms.InputTag("beamDivergenceVtxGenerator")
 
-# TODO
-process.bla = cms.EDAnalyzer("EventContentAnalyzer")
-
 # processing path
 process.p = cms.Path(
     process.generator
