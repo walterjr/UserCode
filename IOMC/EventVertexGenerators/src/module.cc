@@ -9,6 +9,8 @@
 #include "IOMC/EventVertexGenerators/interface/BetafuncEvtVtxGenerator.h"
 #include "IOMC/EventVertexGenerators/interface/GaussianZBeamSpotFilter.h"
 
+#include "IOMC/EventVertexGenerators/interface/BeamDivergenceVtxGenerator.h"
+
 #include "FWCore/PluginManager/interface/ModuleDef.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 
@@ -22,3 +24,5 @@ DEFINE_FWK_MODULE(FlatEvtVtxGenerator) ;
 DEFINE_FWK_MODULE(BeamProfileVtxGenerator) ;
 DEFINE_FWK_MODULE(BetafuncEvtVtxGenerator) ;
 DEFINE_FWK_MODULE(GaussianZBeamSpotFilter);
+
+DEFINE_FWK_MODULE(BeamDivergenceVtxGenerator);
