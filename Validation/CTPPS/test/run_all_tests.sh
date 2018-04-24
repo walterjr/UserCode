@@ -8,6 +8,11 @@ function RunOne()
 }
 
 
+cd "smearing"
+RunOne "test_smearing"
+cd - &> /dev/null
+
+
 cd "optics_parametrisation_validation"
 RunOne "plot_optical_functions"
 cd - &> /dev/null
@@ -19,6 +24,7 @@ RunOne "test_reco_simu_diff_with_det_sm"
 RunOne "test_reco_simu_diff_without_det_sm"
 RunOne "test_y_vs_x_profile"
 RunOne "test_long_extrapolation"
+RunOne "test_simu_diff_beam_sm"
 cd - &> /dev/null
 
 
