@@ -256,11 +256,9 @@ void CTPPSFastProtonSimulation::transportProton(const HepMC::GenVertex* in_vtx, 
     vtx_y_offset = yOffsetSector56_;
     half_cr_angle = halfCrossingAngleSector56_;
   }
-
-  // extrapolate particle to z = 0
   
   // transport the proton into each pot
-  for ( const auto& rp : pots_ )
+  for (const auto& rp : pots_)
   {
     // first check the arm
     if (rp.detid.arm() != arm)
@@ -276,12 +274,14 @@ void CTPPSFastProtonSimulation::transportProton(const HepMC::GenVertex* in_vtx, 
     const double xi = 1. - p / p0;
     const double th_x_phys = mom_lhc.x() / p;
     const double th_y_phys = mom_lhc.y() / p;
+    const double vtx_lhc_eff_x = vtx_lhc.x() - vtx_lhc.z() * (mom_lhc.x() / mom_lhc.z() + half_cr_angle);
+    const double vtx_lhc_eff_y = vtx_lhc.y() - vtx_lhc.z() * (mom_lhc.y() / mom_lhc.z());
 
     // transport proton
     double kin_tr_in[5] = {
-      vtx_lhc.x()*1E-2,
+      vtx_lhc_eff_x * 1E-2,
       (th_x_phys + half_cr_angle) * (1.-xi),
-      vtx_lhc.y()*1E-2 + vtx_y_offset,
+      vtx_lhc_eff_y * 1E-2 + vtx_y_offset,
       th_y_phys * (1.-xi),
       -xi
     };
