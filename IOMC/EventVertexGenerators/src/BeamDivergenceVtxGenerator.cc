@@ -5,12 +5,13 @@
 BeamDivergenceVtxGenerator::BeamDivergenceVtxGenerator(const edm::ParameterSet& iConfig) :
   sourceToken_( consumes<edm::HepMCProduct>( iConfig.getParameter<edm::InputTag>( "src" ) ) ),
 
-  vertexMeanX_               ( iConfig.getParameter<double>( "vertexMeanX" ) ),
-  vertexMeanY_               ( iConfig.getParameter<double>( "vertexMeanY" ) ),
-  vertexMeanZ_               ( iConfig.getParameter<double>( "vertexMeanZ" ) ),
-  vertexSigmaX_              ( iConfig.getParameter<double>( "vertexSigmaX" ) ),
-  vertexSigmaY_              ( iConfig.getParameter<double>( "vertexSigmaY" ) ),
-  vertexSigmaZ_              ( iConfig.getParameter<double>( "vertexSigmaZ" ) ),
+  // python config gives numbers in cm, we store them in mm
+  vertexMeanX_               ( iConfig.getParameter<double>( "vertexMeanX" ) * 1E1 ),
+  vertexMeanY_               ( iConfig.getParameter<double>( "vertexMeanY" ) * 1E1 ),
+  vertexMeanZ_               ( iConfig.getParameter<double>( "vertexMeanZ" ) * 1E1 ),
+  vertexSigmaX_              ( iConfig.getParameter<double>( "vertexSigmaX" ) * 1E1 ),
+  vertexSigmaY_              ( iConfig.getParameter<double>( "vertexSigmaY" ) * 1E1 ),
+  vertexSigmaZ_              ( iConfig.getParameter<double>( "vertexSigmaZ" ) * 1E1 ),
 
   beamDivergenceX_           ( iConfig.getParameter<double>( "beamDivergenceX" ) ),
   beamDivergenceY_           ( iConfig.getParameter<double>( "beamDivergenceY" ) ),

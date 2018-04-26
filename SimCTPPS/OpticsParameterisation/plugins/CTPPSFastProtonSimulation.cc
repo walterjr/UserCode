@@ -232,7 +232,7 @@ void CTPPSFastProtonSimulation::transportProton(const HepMC::GenVertex* in_vtx, 
   /// horizontal component of proton momentum: p_x = th_x * (1-xi) * p_nom
   
   // vectors in CMS convention
-  const HepMC::FourVector vtx_cms = in_vtx->position(); // in cm
+  const HepMC::FourVector vtx_cms = in_vtx->position(); // in mm
   const HepMC::FourVector mom_cms = in_trk->momentum();
 
   // transformation to LHC/TOTEM convention
@@ -277,14 +277,15 @@ void CTPPSFastProtonSimulation::transportProton(const HepMC::GenVertex* in_vtx, 
     const double vtx_lhc_eff_x = vtx_lhc.x() - vtx_lhc.z() * (mom_lhc.x() / mom_lhc.z() + half_cr_angle);
     const double vtx_lhc_eff_y = vtx_lhc.y() - vtx_lhc.z() * (mom_lhc.y() / mom_lhc.z());
 
-    // transport proton
     double kin_tr_in[5] = {
-      vtx_lhc_eff_x * 1E-2,
+      vtx_lhc_eff_x * 1E-3, // conversion mm -> m
       (th_x_phys + half_cr_angle) * (1.-xi),
-      vtx_lhc_eff_y * 1E-2 + vtx_y_offset,
+      vtx_lhc_eff_y * 1E-3 + vtx_y_offset,
       th_y_phys * (1.-xi),
       -xi
     };
+
+    // transport proton
     double kin_tr_out[5];
     bool proton_transported = rp.approximator->Transport(kin_tr_in, kin_tr_out, checkApertures_, invertBeamCoordinatesSystem_);
     const double b_x_tr = kin_tr_out[0], b_y_tr = kin_tr_out[2];

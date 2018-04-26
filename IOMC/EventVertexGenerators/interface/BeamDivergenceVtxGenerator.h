@@ -41,7 +41,7 @@ class BeamDivergenceVtxGenerator : public edm::stream::EDProducer<>
   private:
     edm::EDGetTokenT<edm::HepMCProduct> sourceToken_;
 
-    // values in cm
+    // values in mm
     double vertexMeanX_, vertexMeanY_, vertexMeanZ_;
     double vertexSigmaX_, vertexSigmaY_, vertexSigmaZ_;
 

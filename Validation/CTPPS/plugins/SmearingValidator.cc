@@ -121,10 +121,10 @@ void SmearingValidator::analyze(const edm::Event& iEvent, const edm::EventSetup&
     }
     */
     
-    // from cm to mm
-    h_de_vtx_x->Fill((vn.x() - vo.x()) * 1E1);
-    h_de_vtx_y->Fill((vn.y() - vo.y()) * 1E1);
-    h_de_vtx_z->Fill((vn.z() - vo.z()) * 1E1);
+    // HepMC gives vertex in mm
+    h_de_vtx_x->Fill(vn.x() - vo.x());
+    h_de_vtx_y->Fill(vn.y() - vo.y());
+    h_de_vtx_z->Fill(vn.z() - vo.z());
   }
 
   // particles
