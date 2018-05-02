@@ -316,28 +316,43 @@ void ProtonReconstructionAlgorithm::reconstructFromMultiRP(const vector<const CT
   const ROOT::Fit::FitResult& result = fitter_->Result();
   const double *params = result.GetParams();
 
-  edm::LogInfo("ProtonReconstructionAlgorithm")
-    << "at reconstructed level: "
-    << "xi=" << params[0] << ", "
-    << "theta_x=" << params[1] << ", "
-    << "theta_y=" << params[2] << ", "
-    << "vertex_y=" << params[3] << "\n";
+  if (verbosity)
+    edm::LogInfo("ProtonReconstructionAlgorithm")
+      << "at reconstructed level: "
+      << "xi=" << params[0] << ", "
+      << "theta_x=" << params[1] << ", "
+      << "theta_y=" << params[2] << ", "
+      << "vertex_y=" << params[3] << "\n";
 
   if (verbosity)
     printf("    fit: xi = %f, th_x = %E, th_y = %E, vtx_y = %E, chiSq = %.0f\n", params[0], params[1], params[2], params[3], result.Chi2());
 
   reco::ProtonTrack pt;
   pt.method = reco::ProtonTrack::rmMultiRP;
-  pt.setVertex(Local3DPoint(0., params[3], 0.));
-  pt.setDirection(Local3DVector(params[1], params[2], 1.)); // TODO: make this correct, apply the CMS coordinate convention
-  pt.setXi(params[0]);
-
-  for (const auto &track : tracks)
-    pt.contributingRPIds.insert(track->getRPId());
 
   pt.fitChiSq = result.Chi2();
   pt.fitNDF = 2.*tracks.size() - 4;
   pt.lhcSector = (CTPPSDetId(tracks[0]->getRPId()).arm() == 0) ? reco::ProtonTrack::sector45 : reco::ProtonTrack::sector56;
+
+  pt.setVertex(Local3DPoint(0., params[3]*1E3, 0.));  // vertext in mm
+
+  const double p_nom = 6500.;  // GeV
+  const double p = p_nom *  (1. - params[0]);
+  const double th_x = params[1];
+  const double th_y = params[2];
+  const double cos_th = sqrt(1. - th_x*th_x - th_y*th_y);
+  const double sign_z_lhc = (pt.lhcSector == reco::ProtonTrack::sector45) ? -1. : +1.;
+
+  pt.setXi(params[0]);
+
+  pt.setDirection(Local3DVector(
+    - p * th_x,   // the signs reflect change LHC --> CMS convention
+    + p * th_y,
+    - sign_z_lhc * p * cos_th
+  ));
+
+  for (const auto &track : tracks)
+    pt.contributingRPIds.insert(track->getRPId());
 
   const double max_chi_sq = 1. + 3. * pt.fitNDF;
 

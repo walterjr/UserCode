@@ -32,9 +32,11 @@ namespace reco
         isValid_( true ) {}
       ~ProtonTrack() {}
 
+      // in mm
       void setVertex( const Local3DPoint& vtx ) { vertex_ = vtx; }
       const Local3DPoint& vertex() const { return vertex_; }
 
+      // momentum in GeV
       void setDirection( const Local3DVector& dir ) { direction_ = dir; }
       const Local3DVector& direction() const { return direction_; }
 
