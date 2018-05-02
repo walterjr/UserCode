@@ -25,11 +25,11 @@
 
 //----------------------------------------------------------------------------------------------------
 
-class CTPPSProtonReconstructionValidation : public edm::one::EDAnalyzer<>
+class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
 {
   public:
-    explicit CTPPSProtonReconstructionValidation(const edm::ParameterSet&);
-    ~CTPPSProtonReconstructionValidation() {}
+    explicit CTPPSProtonReconstructionPlotter(const edm::ParameterSet&);
+    ~CTPPSProtonReconstructionPlotter() {}
 
   private: 
     virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
@@ -148,7 +148,7 @@ using namespace edm;
 
 //----------------------------------------------------------------------------------------------------
 
-CTPPSProtonReconstructionValidation::CTPPSProtonReconstructionValidation(const edm::ParameterSet &ps) :
+CTPPSProtonReconstructionPlotter::CTPPSProtonReconstructionPlotter(const edm::ParameterSet &ps) :
   tokenRecoProtons(consumes<std::vector<reco::ProtonTrack>>(ps.getParameter<InputTag>("tagRecoProtons"))),
   outputFile(ps.getParameter<string>("outputFile"))
 {
@@ -156,7 +156,7 @@ CTPPSProtonReconstructionValidation::CTPPSProtonReconstructionValidation(const e
 
 //----------------------------------------------------------------------------------------------------
 
-void CTPPSProtonReconstructionValidation::analyze(const edm::Event &event, const edm::EventSetup&)
+void CTPPSProtonReconstructionPlotter::analyze(const edm::Event &event, const edm::EventSetup&)
 {
   // get input
   Handle<vector<reco::ProtonTrack>> recoProtons;
@@ -213,7 +213,7 @@ void CTPPSProtonReconstructionValidation::analyze(const edm::Event &event, const
 
 //----------------------------------------------------------------------------------------------------
 
-void CTPPSProtonReconstructionValidation::endJob()
+void CTPPSProtonReconstructionPlotter::endJob()
 {
   TFile *f_out = TFile::Open(outputFile.c_str(), "recreate");
 
@@ -252,4 +252,4 @@ void CTPPSProtonReconstructionValidation::endJob()
 
 //----------------------------------------------------------------------------------------------------
 
-DEFINE_FWK_MODULE(CTPPSProtonReconstructionValidation);
+DEFINE_FWK_MODULE(CTPPSProtonReconstructionPlotter);
