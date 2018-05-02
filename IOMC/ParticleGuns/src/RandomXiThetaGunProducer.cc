@@ -25,6 +25,8 @@ using namespace std;
 //----------------------------------------------------------------------------------------------------
 
 RandomXiThetaGunProducer::RandomXiThetaGunProducer(const edm::ParameterSet& pset) : 
+  verbosity(pset.getUntrackedParameter<unsigned int>("verbosity", 0)),
+
   particleId(pset.getParameter<unsigned int>("particleId")),
 
   energy(pset.getParameter<double>("energy")),
@@ -45,8 +47,8 @@ RandomXiThetaGunProducer::RandomXiThetaGunProducer(const edm::ParameterSet& pset
 
 void RandomXiThetaGunProducer::produce(edm::Event &e, const edm::EventSetup& es) 
 {
-  // TODO
-  printf("===================== %u:%llu =====================\n", e.id().run(), e.id().event());
+  if (verbosity)
+    printf("===================== %u:%llu =====================\n", e.id().run(), e.id().event());
 
   // get conditions
   edm::Service<edm::RandomNumberGenerator> rng;
@@ -87,8 +89,8 @@ void RandomXiThetaGunProducer::GenerateParticle(double z_sign, double mass, unsi
   const double theta_x = CLHEP::RandGauss::shoot(engine, theta_x_mean, theta_x_sigma);
   const double theta_y = CLHEP::RandGauss::shoot(engine, theta_y_mean, theta_y_sigma);
 
-  // TODO
-  printf("xi = %.4f, theta_x = %E, theta_y = %E, z_sign = %.0f\n", xi, theta_x, theta_y, z_sign);
+  if (verbosity)
+    printf("xi = %.4f, theta_x = %E, theta_y = %E, z_sign = %.0f\n", xi, theta_x, theta_y, z_sign);
 
   const double cos_theta = sqrt(1. - theta_x*theta_x - theta_y*theta_y);
 

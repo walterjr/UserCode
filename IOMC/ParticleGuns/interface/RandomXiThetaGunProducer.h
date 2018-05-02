@@ -31,6 +31,8 @@ class RandomXiThetaGunProducer : public one::EDProducer<>
     
     void GenerateParticle(double z_sign, double mass, unsigned int barcode, CLHEP::HepRandomEngine* engine, HepMC::GenVertex *vtx) const;
 
+    unsigned int verbosity;
+
     unsigned int particleId;
 
     double energy;
