@@ -4,7 +4,7 @@ from SimCTPPS.OpticsParameterisation.ctppsDetectorPackages_cff import detectorPa
 from SimCTPPS.OpticsParameterisation.lhcBeamConditions_cff import lhcBeamConditions_2016PreTS2
 
 ctppsProtonReconstruction = cms.EDProducer('CTPPSProtonReconstruction',
-    verbosity = cms.uint32(0),
+    verbosity = cms.untracked.uint32(0),
 
     tagLocalTrackLite = cms.InputTag('ctppsLocalTrackLiteProducer'),
 
