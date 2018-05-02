@@ -20,8 +20,9 @@ using namespace edm;
 //----------------------------------------------------------------------------------------------------
 
 ProtonReconstructionAlgorithm::ProtonReconstructionAlgorithm(const std::string &optics_file_beam1, const std::string &optics_file_beam2,
-    const edm::ParameterSet &beam_conditions) :
+    const edm::ParameterSet &beam_conditions, unsigned int _verbosity) :
 
+  verbosity(_verbosity),
   beamConditions_(beam_conditions),
   halfCrossingAngleSector45_(beamConditions_.getParameter<double>("halfCrossingAngleSector45" )),
   halfCrossingAngleSector56_(beamConditions_.getParameter<double>("halfCrossingAngleSector56" )),
@@ -49,7 +50,7 @@ ProtonReconstructionAlgorithm::ProtonReconstructionAlgorithm(const std::string &
   };
 
   // TODO: debug only
-  TFile *f_debug = new TFile("debug.root", "recreate");
+  //TFile *f_debug = new TFile("debug.root", "recreate");
 
   // build optics data for each object
   for (const auto &it : idNameMap)
@@ -121,6 +122,7 @@ ProtonReconstructionAlgorithm::ProtonReconstructionAlgorithm(const std::string &
     }
 
     // TODO: debug only
+    /*
     char buf[100];
     unsigned int decRPId = rpId.arm()*100 + rpId.station()*10 + rpId.rp();
     sprintf(buf, "%u", decRPId);
@@ -129,6 +131,7 @@ ProtonReconstructionAlgorithm::ProtonReconstructionAlgorithm(const std::string &
     g_y0_vs_xi->Write("g_y0_vs_xi");
     g_v_y_vs_xi->Write("g_v_y_vs_xi");
     g_L_y_vs_xi->Write("g_L_y_vs_xi");
+    */
 
     rpod.s_xi_vs_x = make_shared<TSpline3>("", g_xi_vs_x->GetX(), g_xi_vs_x->GetY(), g_xi_vs_x->GetN());
     delete g_xi_vs_x;
@@ -151,7 +154,7 @@ ProtonReconstructionAlgorithm::ProtonReconstructionAlgorithm(const std::string &
   fitter_->SetFCN( 4, *chiSquareCalculator_, pStart, 0, true );
 
   // TODO: debug only
-  delete f_debug;
+  //delete f_debug;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -213,18 +216,28 @@ double ProtonReconstructionAlgorithm::ChiSquareCalculator::operator() (const dou
     const double& y = kin_out[2] - kin_out_zero[2];
 
     // calculate chi^2 contributions, convert track data mm --> m
-    const double x_diff_norm = (x - track->getX()*1E-3) / (track->getXUnc()*1E-3);
-    const double y_diff_norm = (y - track->getY()*1E-3) / (track->getYUnc()*1E-3);
+    double x_unc = track->getXUnc();
+    if (x_unc < 1E-3)
+      x_unc = 1E-3;
+
+    double y_unc = track->getYUnc();
+    if (y_unc < 1E-3)
+      y_unc = 1E-3;
+
+    const double x_diff_norm = (x - track->getX()*1E-3) / (x_unc*1E-3);
+    const double y_diff_norm = (y - track->getY()*1E-3) / (y_unc*1E-3);
 
     // increase chi^2
     S2 += x_diff_norm*x_diff_norm + y_diff_norm*y_diff_norm;
   }
 
+  /*
   edm::LogInfo("ChiSquareCalculator")
     << "xi = " << xi << ", "
     << "th_x = " << th_x << ", "
     << "th_y = " << th_y << ", "
     << "vtx_y = " << vtx_y << " | S2 = " << S2 << "\n";
+  */
 
   return S2;
 }
@@ -280,8 +293,12 @@ void ProtonReconstructionAlgorithm::reconstructFromMultiRP(const vector<const CT
   const double vtx_y_0 = (L_y[1] * y[0] - L_y[0] * y[1]) / det_y;
   const double th_y_0 = (v_y[0] * y[1] - v_y[1] * y[0]) / det_y;
 
-  printf("* ProtonReconstructionAlgorithm::reconstructFromMultiRP\n");
-  printf("    initial estimate: xi_0 = %f, th_y_0 = %E, vtx_y_0 = %E\n", xi_0, th_y_0, vtx_y_0);
+  if (verbosity)
+  {
+    unsigned int armId = CTPPSDetId((*tracks.begin())->getRPId()).arm();
+    printf("* ProtonReconstructionAlgorithm::reconstructFromMultiRP(%u)\n", armId);
+    printf("    initial estimate: xi_0 = %f, th_y_0 = %E, vtx_y_0 = %E\n", xi_0, th_y_0, vtx_y_0);
+  }
 
   // minimisation
   fitter_->Config().ParSettings(0).Set("xi", xi_0, 0.005);
@@ -306,12 +323,12 @@ void ProtonReconstructionAlgorithm::reconstructFromMultiRP(const vector<const CT
     << "theta_y=" << params[2] << ", "
     << "vertex_y=" << params[3] << "\n";
 
-  printf("    fit: xi = %f, th_x = %E, th_y = %E, vtx_y = %E\n", params[0], params[1], params[2], params[3]);
+  if (verbosity)
+    printf("    fit: xi = %f, th_x = %E, th_y = %E, vtx_y = %E, chiSq = %.0f\n", params[0], params[1], params[2], params[3], result.Chi2());
 
   reco::ProtonTrack pt;
   pt.method = reco::ProtonTrack::rmMultiRP;
-  pt.setValid(result.IsValid());
-  pt.setVertex(Local3DPoint(0., params[3], 0.));  // TODO: apply the CMS coordinate convention
+  pt.setVertex(Local3DPoint(0., params[3], 0.));
   pt.setDirection(Local3DVector(params[1], params[2], 1.)); // TODO: make this correct, apply the CMS coordinate convention
   pt.setXi(params[0]);
 
@@ -321,6 +338,10 @@ void ProtonReconstructionAlgorithm::reconstructFromMultiRP(const vector<const CT
   pt.fitChiSq = result.Chi2();
   pt.fitNDF = 2.*tracks.size() - 4;
   pt.lhcSector = (CTPPSDetId(tracks[0]->getRPId()).arm() == 0) ? reco::ProtonTrack::sector45 : reco::ProtonTrack::sector56;
+
+  const double max_chi_sq = 1. + 3. * pt.fitNDF;
+
+  pt.setValid(result.IsValid() && pt.fitChiSq < max_chi_sq);
 
   out.push_back(move(pt));
 }
@@ -344,12 +365,14 @@ void ProtonReconstructionAlgorithm::reconstructFromSingleRP(const vector<const C
     CTPPSDetId rpId(track->getRPId());
     unsigned int decRPId = rpId.arm()*100 + rpId.station()*10 + rpId.rp();
 
-    printf("* reconstructFromSingleRP(%u)\n", decRPId);
+    if (verbosity)
+      printf("* reconstructFromSingleRP(%u)\n", decRPId);
 
     auto oit = m_rp_optics_.find(track->getRPId());
     double xi = oit->second.s_xi_vs_x->Eval(track->getX() * 1E-3); // mm --> m
 
-    printf("    x = %f mm, xi = %f\n", track->getX(), xi);
+    if (verbosity)
+      printf("    x = %f mm, xi = %f\n", track->getX(), xi);
 
     reco::ProtonTrack pt;
     pt.method = reco::ProtonTrack::rmSingleRP;

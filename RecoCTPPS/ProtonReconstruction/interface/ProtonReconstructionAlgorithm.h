@@ -30,7 +30,7 @@ class ProtonReconstructionAlgorithm
 {
   public:
     ProtonReconstructionAlgorithm(const std::string &optics_file_beam1, const std::string &optics_file_beam2,
-      const edm::ParameterSet &beam_conditions);
+      const edm::ParameterSet &beam_conditions, unsigned int _verbosity);
 
     ~ProtonReconstructionAlgorithm();
 
@@ -51,16 +51,18 @@ class ProtonReconstructionAlgorithm
       bool check_apertures=false) const;
 
   private:
+    unsigned int verbosity;
+
+    edm::ParameterSet beamConditions_;
+    double halfCrossingAngleSector45_, halfCrossingAngleSector56_;
+    double yOffsetSector45_, yOffsetSector56_;
+
     /// optics data associated with 1 RP
     struct RPOpticsData
     {
       std::shared_ptr<LHCOpticsApproximator> optics;
       std::shared_ptr<TSpline3> s_xi_vs_x, s_y0_vs_xi, s_v_y_vs_xi, s_L_y_vs_xi;
     };
-
-    edm::ParameterSet beamConditions_;
-    double halfCrossingAngleSector45_, halfCrossingAngleSector56_;
-    double yOffsetSector45_, yOffsetSector56_;
 
     /// map: RP id --> optics data
     std::map<unsigned int, RPOpticsData> m_rp_optics_;
