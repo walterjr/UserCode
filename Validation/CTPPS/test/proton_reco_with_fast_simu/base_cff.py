@@ -16,7 +16,7 @@ process.MessageLogger = cms.Service("MessageLogger",
 process.source = cms.Source("EmptySource")
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(1000)
+    input = cms.untracked.int32(100000)
 )
 
 # particle-data table
@@ -49,7 +49,7 @@ process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService
 from Geometry.VeryForwardGeometry.geometryRP_cfi import totemGeomXMLFiles, ctppsDiamondGeomXMLFiles
 
 process.XMLIdealGeometryESSource_CTPPS = cms.ESSource("XMLIdealGeometryESSource",
-    geomXMLFiles = totemGeomXMLFiles+ctppsDiamondGeomXMLFiles+["Validation/CTPPS/test/fast_simu_with_phys_generator/qgsjet/global/RP_Dist_Beam_Cent.xml"],
+    geomXMLFiles = totemGeomXMLFiles+ctppsDiamondGeomXMLFiles+["Validation/CTPPS/test/rp_positions/data/2016_preTS2_without_margin_end/RP_Dist_Beam_Cent.xml"],
     rootNodeName = cms.string('cms:CMSE'),
 )
 

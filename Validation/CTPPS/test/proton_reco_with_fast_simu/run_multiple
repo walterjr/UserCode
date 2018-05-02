@@ -5,8 +5,7 @@ function RunOne()
 	local cfgFile="${1}_cfg.py"
 	local logFile="${1}.log"
 
-	#cmsRun "$cfgFile" &> "$logFile" &
-	cmsRun "$cfgFile" &> /dev/null &
+	cmsRun "$cfgFile" &> "$logFile" &
 }
 
 RunOne test_low_th_level1
