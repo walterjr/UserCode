@@ -16,38 +16,25 @@ process.MessageLogger = cms.Service("MessageLogger",
 process.source = cms.Source("PoolSource",
   fileNames = cms.untracked.vstring(
     "/store/data/Run2016B/DoubleEG/MINIAOD/18Apr2017_ver2-v1/00000/00220DCF-073E-E711-AB1A-0025905C2CBA.root"
+    #'/store/data/Run2016B/DoubleEG/MINIAOD/07Aug17_ver2-v2/00000/3274EFC6-46AA-E711-B9DD-C45444922BFE.root'
   ),
   lumisToProcess = cms.untracked.VLuminosityBlockRange("275371:1-275371:999999")
 )
 
-#process.maxEvents = cms.untracked.PSet(
-#  input = cms.untracked.int32(10000)
-#)
+process.maxEvents = cms.untracked.PSet(
+  input = cms.untracked.int32(10000)
+)
 
 process.load("RecoCTPPS.ProtonReconstruction.ctppsProtonReconstruction_cfi")
 process.ctppsProtonReconstruction.applyExperimentalAlignment = True
 
 process.ctppsProtonReconstructionPlotter = cms.EDAnalyzer("CTPPSProtonReconstructionPlotter",
+    tagTracks = cms.InputTag("ctppsLocalTrackLiteProducer"),
     tagRecoProtons = cms.InputTag("ctppsProtonReconstruction"),
     outputFile = cms.string("test_data_plots.root")
 )
 
-process.eca = cms.EDAnalyzer("EventContentAnalyzer")
-
 process.p = cms.Path(
     process.ctppsProtonReconstruction
-    #* process.eca
     * process.ctppsProtonReconstructionPlotter
 )
-
-# output configuration
-##  process.output = cms.OutputModule("PoolOutputModule",
-##    fileName = cms.untracked.string("output.root"),
-##    outputCommands = cms.untracked.vstring(
-##      "drop *",
-##      "keep CTPPSLocalTrackLites_*_*_*",
-##      "keep recoProtonTracks_*_*_*"
-##    )
-##  )
-##  
-##  process.outpath = cms.EndPath(process.output)

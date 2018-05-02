@@ -16,6 +16,7 @@
 
 #include "DataFormats/CTPPSDetId/interface/CTPPSDetId.h"
 
+#include "DataFormats/CTPPSReco/interface/CTPPSLocalTrackLite.h"
 #include "DataFormats/ProtonReco/interface/ProtonTrack.h"
 
 #include "TFile.h"
@@ -36,6 +37,7 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
 
     virtual void endJob() override;
 
+    edm::EDGetTokenT<std::vector<CTPPSLocalTrackLite>> tokenTracks;
     edm::EDGetTokenT<std::vector<reco::ProtonTrack>> tokenRecoProtons;
 
     std::string outputFile;
@@ -75,9 +77,12 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
       void Init()
       {
         h_xi = new TH1D("", ";#xi", 100, 0., 0.2);
-        h_th_x = new TH1D("", ";#theta_{x}", 100, -500E-6, +500E-6);
-        h_th_y = new TH1D("", ";#theta_{y}", 100, -500E-6, +500E-6);
-        h_vtx_y = new TH1D("", ";vtx_{y}", 100, -0.002, +0.002);
+
+        h_th_x = new TH1D("", ";#theta_{x}   (rad)", 100, -500E-6, +500E-6);
+        h_th_y = new TH1D("", ";#theta_{y}   (rad)", 100, -500E-6, +500E-6);
+
+        h_vtx_y = new TH1D("", ";vtx_{y}   (mm)", 100, -2., +2.);
+
         h_chi_sq = new TH1D("", ";#chi^{2}", 100, 0., 0.);
         h_chi_sq_norm = new TH1D("", ";#chi^{2}/ndf", 100, 0., 5.);
       }
@@ -90,10 +95,14 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
         if (p.valid())
         {
           h_xi->Fill(p.xi());
-          h_th_x->Fill(p.direction().x());
-          h_th_y->Fill(p.direction().y());
+
+          h_th_x->Fill(p.direction().x() / p.direction().mag());
+          h_th_y->Fill(p.direction().y() / p.direction().mag());
+
           h_vtx_y->Fill(p.vertex().y());
+
           h_chi_sq->Fill(p.fitChiSq);
+
           if (p.fitNDF > 0)
             h_chi_sq_norm->Fill(p.fitChiSq / p.fitNDF);
         }
@@ -139,6 +148,8 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
     };
 
     std::map<unsigned int, SingleMultiCorrelationPlots> singleMultiCorrelationPlots;
+
+    TH1D *h_de_x_f_n_L, *h_de_x_f_n_R;
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -149,9 +160,12 @@ using namespace edm;
 //----------------------------------------------------------------------------------------------------
 
 CTPPSProtonReconstructionPlotter::CTPPSProtonReconstructionPlotter(const edm::ParameterSet &ps) :
+  tokenTracks(consumes< std::vector<CTPPSLocalTrackLite>>(ps.getParameter<edm::InputTag>("tagTracks"))),
   tokenRecoProtons(consumes<std::vector<reco::ProtonTrack>>(ps.getParameter<InputTag>("tagRecoProtons"))),
   outputFile(ps.getParameter<string>("outputFile"))
 {
+  h_de_x_f_n_L = new TH1D("h_de_x_f_n_L", ";x_{LF} - x_{LN}   (mm)", 100, -3., +3.);
+  h_de_x_f_n_R = new TH1D("h_de_x_f_n_R", ";x_{RF} - x_{RN}   (mm)", 100, -3., +3.);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -159,8 +173,49 @@ CTPPSProtonReconstructionPlotter::CTPPSProtonReconstructionPlotter(const edm::Pa
 void CTPPSProtonReconstructionPlotter::analyze(const edm::Event &event, const edm::EventSetup&)
 {
   // get input
+  edm::Handle< std::vector<CTPPSLocalTrackLite> > tracks;
+  event.getByToken(tokenTracks, tracks);
+
   Handle<vector<reco::ProtonTrack>> recoProtons;
   event.getByToken(tokenRecoProtons, recoProtons);
+
+  // track plots
+  const CTPPSLocalTrackLite *tr_L_N = NULL;
+  const CTPPSLocalTrackLite *tr_L_F = NULL;
+  const CTPPSLocalTrackLite *tr_R_N = NULL;
+  const CTPPSLocalTrackLite *tr_R_F = NULL;
+
+  for (const auto &tr : *tracks)
+  {
+    CTPPSDetId rpId(tr.getRPId());
+    unsigned int decRPId = rpId.arm()*100 + rpId.station()*10 + rpId.rp();
+
+    if (decRPId == 2) tr_L_N = &tr;
+    if (decRPId == 3) tr_L_F = &tr;
+    if (decRPId == 102) tr_R_N = &tr;
+    if (decRPId == 103) tr_R_F = &tr;
+  }
+
+  bool x_correlation_L = false;
+  bool x_correlation_R = false;
+
+  if (tr_L_N && tr_L_F)
+  {
+    const double de = tr_L_F->getX() - tr_L_N->getX();
+    h_de_x_f_n_L->Fill(de);
+
+    if (fabs(de - 1.18) < 2. * 0.22)
+      x_correlation_L = true;
+  }
+
+  if (tr_R_N && tr_R_F)
+  {
+    const double de = tr_R_F->getX() - tr_R_N->getX();
+    h_de_x_f_n_R->Fill(de);
+
+    if (fabs(de + 0.81) < 2. * 0.24)
+      x_correlation_R = true;
+  }
 
   // make single-RP-reco plots
   for (const auto & proton : *recoProtons)
@@ -176,6 +231,11 @@ void CTPPSProtonReconstructionPlotter::analyze(const edm::Event &event, const ed
   // make multi-RP-reco plots
   for (const auto & proton : *recoProtons)
   {
+    bool x_correlation = (proton.lhcSector == reco::ProtonTrack::sector45) ? x_correlation_L : x_correlation_R;
+
+    if (!x_correlation)
+      continue;
+
     if (proton.method == reco::ProtonTrack::rmMultiRP)
     {
       CTPPSDetId rpId(* proton.contributingRPIds.begin());
@@ -216,6 +276,9 @@ void CTPPSProtonReconstructionPlotter::analyze(const edm::Event &event, const ed
 void CTPPSProtonReconstructionPlotter::endJob()
 {
   TFile *f_out = TFile::Open(outputFile.c_str(), "recreate");
+
+  h_de_x_f_n_L->Write();
+  h_de_x_f_n_R->Write();
 
   TDirectory *d_singleRPPlots = f_out->mkdir("singleRPPlots");
   for (const auto it : singleRPPlots)
