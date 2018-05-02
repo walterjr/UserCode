@@ -4,6 +4,8 @@ from SimCTPPS.OpticsParameterisation.ctppsDetectorPackages_cff import detectorPa
 from SimCTPPS.OpticsParameterisation.lhcBeamConditions_cff import lhcBeamConditions_2016PreTS2
 
 ctppsFastProtonSimulation = cms.EDProducer('CTPPSFastProtonSimulation',
+    verbosity = cms.untracked.uint32(0),
+
     hepMCTag = cms.InputTag('generator', 'unsmeared'),
 
     beamConditions = lhcBeamConditions_2016PreTS2,

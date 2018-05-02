@@ -99,6 +99,8 @@ class CTPPSFastProtonSimulation : public edm::stream::EDProducer<>
 
     // ------------ internal parameters ------------
 
+    unsigned int verbosity;
+
     /// collection of RP information
     std::vector<CTPPSPotInfo> pots_;
 
@@ -137,7 +139,9 @@ CTPPSFastProtonSimulation::CTPPSFastProtonSimulation( const edm::ParameterSet& i
   produceHitsRelativeToBeam_  ( iConfig.getParameter<bool>( "produceHitsRelativeToBeam" ) ),
   roundToPitch_               ( iConfig.getParameter<bool>( "roundToPitch" ) ),
   pitch_                      ( iConfig.getParameter<double>( "pitch" ) ),
-  insensitiveMargin_          ( iConfig.getParameter<double>( "insensitiveMargin" ) )
+  insensitiveMargin_          ( iConfig.getParameter<double>( "insensitiveMargin" ) ),
+
+  verbosity                   ( iConfig.getUntrackedParameter<unsigned int>( "verbosity", 0 ) )
 {
   if (produceScoringPlaneHits_)
     produces< std::vector<CTPPSLocalTrackLite> >();
@@ -148,8 +152,8 @@ CTPPSFastProtonSimulation::CTPPSFastProtonSimulation( const edm::ParameterSet& i
   // v position of strip 0
   stripZeroPosition_ = RPTopology::last_strip_to_border_dist_ + (RPTopology::no_of_strips_-1)*RPTopology::pitch_ - RPTopology::y_width_/2.;
 
-  auto f_in_optics_beam1 = std::make_unique<TFile>( opticsFileBeam1_.fullPath().c_str() ),
-       f_in_optics_beam2 = std::make_unique<TFile>( opticsFileBeam2_.fullPath().c_str() );
+  auto f_in_optics_beam1 = std::make_unique<TFile>( opticsFileBeam1_.fullPath().c_str() );
+  auto f_in_optics_beam2 = std::make_unique<TFile>( opticsFileBeam2_.fullPath().c_str() );
 
   // load optics and interpolators
   for ( const auto& rp : detectorPackages_ )
@@ -284,6 +288,13 @@ void CTPPSFastProtonSimulation::transportProton(const HepMC::GenVertex* in_vtx, 
       th_y_phys * (1.-xi),
       -xi
     };
+
+    if (verbosity)
+    {
+      const unsigned int rpDecId = rp.detid.arm()*100 + rp.detid.station()*10 + rp.detid.rp();
+      printf("simu: RP=%u, xi=%.4f, th_x=%.3E, %.3E, vtx_lhc_eff_x=%.3E, vtx_lhc_eff_y=%.3E\n", rpDecId,
+        xi, th_x_phys, th_y_phys, vtx_lhc_eff_x, vtx_lhc_eff_y);
+    }
 
     // transport proton
     double kin_tr_out[5];
