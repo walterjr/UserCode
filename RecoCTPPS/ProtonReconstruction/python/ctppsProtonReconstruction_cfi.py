@@ -4,6 +4,8 @@ from SimCTPPS.OpticsParameterisation.ctppsDetectorPackages_cff import detectorPa
 from SimCTPPS.OpticsParameterisation.lhcBeamConditions_cff import lhcBeamConditions_2016PreTS2
 
 ctppsProtonReconstruction = cms.EDProducer('CTPPSProtonReconstruction',
+    verbosity = cms.uint32(0),
+
     tagLocalTrackLite = cms.InputTag('ctppsLocalTrackLiteProducer'),
 
     beamConditions = lhcBeamConditions_2016PreTS2,
@@ -13,4 +15,6 @@ ctppsProtonReconstruction = cms.EDProducer('CTPPSProtonReconstruction',
 
     opticsFileBeam1 = cms.FileInPath('CondFormats/CTPPSOpticsObjects/data/2016_preTS2/version4-vale1/beam1/parametrization_6500GeV_0p4_185_reco.root'),
     opticsFileBeam2 = cms.FileInPath('CondFormats/CTPPSOpticsObjects/data/2016_preTS2/version4-vale1/beam2/parametrization_6500GeV_0p4_185_reco.root'),
+
+    applyExperimentalAlignment = cms.bool(False)
 )

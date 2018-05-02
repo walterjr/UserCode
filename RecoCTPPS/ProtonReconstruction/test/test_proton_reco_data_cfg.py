@@ -25,10 +25,11 @@ process.source = cms.Source("PoolSource",
 #)
 
 process.load("RecoCTPPS.ProtonReconstruction.ctppsProtonReconstruction_cfi")
+process.ctppsProtonReconstruction.applyExperimentalAlignment = True
 
-process.ctppsProtonReconstructionValidation = cms.EDAnalyzer("CTPPSProtonReconstructionValidation",
+process.ctppsProtonReconstructionPlotter = cms.EDAnalyzer("CTPPSProtonReconstructionPlotter",
     tagRecoProtons = cms.InputTag("ctppsProtonReconstruction"),
-    outputFile = cms.string("validation.root")
+    outputFile = cms.string("test_data_plots.root")
 )
 
 process.eca = cms.EDAnalyzer("EventContentAnalyzer")
@@ -36,7 +37,7 @@ process.eca = cms.EDAnalyzer("EventContentAnalyzer")
 process.p = cms.Path(
     process.ctppsProtonReconstruction
     #* process.eca
-    * process.ctppsProtonReconstructionValidation
+    * process.ctppsProtonReconstructionPlotter
 )
 
 # output configuration
