@@ -56,10 +56,28 @@ class CTPPSProtonReconstructionValidator : public edm::one::EDAnalyzer<>
       TH1D *h_de_xi = NULL;
       TProfile *p_de_xi_vs_xi_simu;
 
+      TH1D *h_de_th_x = NULL;
+      TProfile *p_de_th_x_vs_xi_simu;
+
+      TH1D *h_de_th_y = NULL;
+      TProfile *p_de_th_y_vs_xi_simu;
+
+      TH1D *h_de_vtx_y = NULL;
+      TProfile *p_de_vtx_y_vs_xi_simu;
+
       void Init()
       {
         h_de_xi = new TH1D("", ";#xi_{reco} - #xi_{simu}", 100, 0., 0.);
         p_de_xi_vs_xi_simu = new TProfile("", ";#xi_{simu};#xi_{reco} - #xi_{simu}", 19, 0.015, 0.205);
+
+        h_de_th_x = new TH1D("", ";#theta_{x,reco} - #theta_{x,simu}", 100, 0., 0.);
+        p_de_th_x_vs_xi_simu = new TProfile("", ";#xi_{simu};#theta_{x,reco} - #theta_{x,simu}", 19, 0.015, 0.205);
+
+        h_de_th_y = new TH1D("", ";#theta_{y,reco} - #theta_{y,simu}", 100, 0., 0.);
+        p_de_th_y_vs_xi_simu = new TProfile("", ";#xi_{simu};#theta_{y,reco} - #theta_{y,simu}", 19, 0.015, 0.205);
+
+        h_de_vtx_y = new TH1D("", ";vtx_{y,reco} - vtx_{y,simu}   (mm)", 100, 0., 0.);
+        p_de_vtx_y_vs_xi_simu = new TProfile("", ";#xi_{simu};vtx_{y,reco} - vtx_{y,simu} (mm)", 19, 0.015, 0.205);
       }
 
       static TGraphErrors* ProfileToRMSGraph(TProfile *p, const std::string &name = "")
@@ -94,6 +112,18 @@ class CTPPSProtonReconstructionValidator : public edm::one::EDAnalyzer<>
         h_de_xi->Write("h_de_xi");
         p_de_xi_vs_xi_simu->Write("p_de_xi_vs_xi_simu");
         ProfileToRMSGraph(p_de_xi_vs_xi_simu, "g_rms_de_xi_vs_xi_simu")->Write();
+
+        h_de_th_x->Write("h_de_th_x");
+        p_de_th_x_vs_xi_simu->Write("p_de_th_x_vs_xi_simu");
+        ProfileToRMSGraph(p_de_th_x_vs_xi_simu, "g_rms_de_th_x_vs_xi_simu")->Write();
+
+        h_de_th_y->Write("h_de_th_y");
+        p_de_th_y_vs_xi_simu->Write("p_de_th_y_vs_xi_simu");
+        ProfileToRMSGraph(p_de_th_y_vs_xi_simu, "g_rms_de_th_y_vs_xi_simu")->Write();
+
+        h_de_vtx_y->Write("h_de_vtx_y");
+        p_de_vtx_y_vs_xi_simu->Write("p_de_vtx_y_vs_xi_simu");
+        ProfileToRMSGraph(p_de_vtx_y_vs_xi_simu, "g_rms_de_vtx_y_vs_xi_simu")->Write();
       }
     };
 
@@ -234,8 +264,21 @@ void CTPPSProtonReconstructionValidator::FillPlots(unsigned int meth_idx, unsign
 {
   const double p_nom = 6500.;
   const double xi_simu = (p_nom - mom.e()) / p_nom;
+  const double th_x_simu = mom.x() / mom.rho();
+  const double th_y_simu = mom.y() / mom.rho();
+  const double vtx_y_simu = vtx.y();  // mm
 
   const double xi_reco = rec_pr.xi();
+  const double th_x_reco = rec_pr.direction().x() / rec_pr.direction().mag();
+  const double th_y_reco = rec_pr.direction().y() / rec_pr.direction().mag();
+  const double vtx_y_reco = rec_pr.vertex().y();  // mm
+
+  /*
+  printf("- SIMU: xi=%.4f, th_x=%.3E, th_y=%.3E, vtx_y=%.3E; RECO: xi=%.4f, th_x=%.3E, th_y=%.3E, vtx_y=%.3E\n",
+    xi_simu, th_x_simu, th_y_simu, vtx_y_simu,
+    xi_reco, th_x_reco, th_y_reco, vtx_y_reco
+  );
+  */
 
   if (meth_idx == 1 && fabs(xi_reco - xi_simu) > 0.01)
     printf("   PROBLEM: xi diff too large\n");
@@ -246,6 +289,15 @@ void CTPPSProtonReconstructionValidator::FillPlots(unsigned int meth_idx, unsign
 
   p.h_de_xi->Fill(xi_reco - xi_simu);
   p.p_de_xi_vs_xi_simu->Fill(xi_simu, xi_reco - xi_simu);
+
+  p.h_de_th_x->Fill(th_x_reco - th_x_simu);
+  p.p_de_th_x_vs_xi_simu->Fill(xi_simu, th_x_reco - th_x_simu);
+
+  p.h_de_th_y->Fill(th_y_reco - th_y_simu);
+  p.p_de_th_y_vs_xi_simu->Fill(xi_simu, th_y_reco - th_y_simu);
+
+  p.h_de_vtx_y->Fill(vtx_y_reco - vtx_y_simu);
+  p.p_de_vtx_y_vs_xi_simu->Fill(xi_simu, vtx_y_reco - vtx_y_simu);
 }
 
 //----------------------------------------------------------------------------------------------------
