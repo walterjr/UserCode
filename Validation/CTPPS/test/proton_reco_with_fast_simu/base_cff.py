@@ -16,8 +16,10 @@ process.MessageLogger = cms.Service("MessageLogger",
 process.source = cms.Source("EmptySource")
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(100000)
+    input = cms.untracked.int32(10000)
 )
+
+outputDir = "1E4"
 
 # particle-data table
 process.load("SimGeneral.HepPDTESSource.pythiapdt_cfi")

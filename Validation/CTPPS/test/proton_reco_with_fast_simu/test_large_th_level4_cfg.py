@@ -4,4 +4,4 @@ SetLargeTheta()
 
 SetLevel4()
 
-process.ctppsProtonReconstructionValidator.outputFile = "output_large_th_level4.root"
+process.ctppsProtonReconstructionValidator.outputFile = outputDir + "/output_large_th_level4.root"

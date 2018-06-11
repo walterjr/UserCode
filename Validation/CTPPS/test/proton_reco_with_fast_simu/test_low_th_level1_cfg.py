@@ -4,4 +4,4 @@ SetLowTheta()
 
 SetLevel1()
 
-process.ctppsProtonReconstructionValidator.outputFile = "output_low_th_level1.root"
+process.ctppsProtonReconstructionValidator.outputFile = outputDir + "/output_low_th_level1.root"
