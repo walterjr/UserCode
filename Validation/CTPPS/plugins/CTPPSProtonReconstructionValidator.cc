@@ -21,6 +21,7 @@
 
 #include "TFile.h"
 #include "TH1D.h"
+#include "TH2D.h"
 #include "TProfile.h"
 #include "TGraphErrors.h"
 
@@ -55,6 +56,7 @@ class CTPPSProtonReconstructionValidator : public edm::one::EDAnalyzer<>
     {
       TH1D *h_de_xi = NULL;
       TProfile *p_de_xi_vs_xi_simu;
+      TH2D *h_xi_reco_vs_xi_simu;
 
       TH1D *h_de_th_x = NULL;
       TProfile *p_de_th_x_vs_xi_simu;
@@ -69,6 +71,7 @@ class CTPPSProtonReconstructionValidator : public edm::one::EDAnalyzer<>
       {
         h_de_xi = new TH1D("", ";#xi_{reco} - #xi_{simu}", 100, 0., 0.);
         p_de_xi_vs_xi_simu = new TProfile("", ";#xi_{simu};#xi_{reco} - #xi_{simu}", 19, 0.015, 0.205);
+        h_xi_reco_vs_xi_simu = new TH2D("", ";#xi_{simu};#xi_{reco}", 100, 0., 0.30, 100, 0., 0.30);
 
         h_de_th_x = new TH1D("", ";#theta_{x,reco} - #theta_{x,simu}", 100, 0., 0.);
         p_de_th_x_vs_xi_simu = new TProfile("", ";#xi_{simu};#theta_{x,reco} - #theta_{x,simu}", 19, 0.015, 0.205);
@@ -109,6 +112,7 @@ class CTPPSProtonReconstructionValidator : public edm::one::EDAnalyzer<>
 
       void Write() const
       {
+        h_xi_reco_vs_xi_simu->Write("h_xi_reco_vs_xi_simu");
         h_de_xi->Write("h_de_xi");
         p_de_xi_vs_xi_simu->Write("p_de_xi_vs_xi_simu");
         ProfileToRMSGraph(p_de_xi_vs_xi_simu, "g_rms_de_xi_vs_xi_simu")->Write();
@@ -156,6 +160,8 @@ CTPPSProtonReconstructionValidator::~CTPPSProtonReconstructionValidator()
 
 void CTPPSProtonReconstructionValidator::analyze(const edm::Event& iEvent, const edm::EventSetup&)
 {
+  //printf("------------------------ run=%u, event=%llu -----------------------\n", iEvent.id().run(), iEvent.id().event());
+
   // get input
   edm::Handle<edm::HepMCProduct> hHepMCBeforeSmearing;
   iEvent.getByToken(tokenHepMCBeforeSmearing, hHepMCBeforeSmearing);
@@ -190,7 +196,25 @@ void CTPPSProtonReconstructionValidator::analyze(const edm::Event& iEvent, const
 
   for (auto it = hepMCEventBeforeSmearing->particles_begin(); it != hepMCEventBeforeSmearing->particles_end(); ++it)
   {
-    const auto &mom = (*it)->momentum();
+    const auto &part = *it;
+
+    // accept only stable non-beam protons
+    if (part->pdg_id() != 2212)
+      continue;
+
+    if (part->status() != 1)
+      continue;
+
+    if (part->is_beam())
+      continue;
+
+    const auto &mom = part->momentum();
+
+    if (mom.e() < 4500.)
+      continue;
+
+    // TODO
+    //printf("    status = %u, mom = %E, %E, %E\n", part->status(), mom.x(), mom.y(), mom.z());
 
     if (mom.z() > 0)
     {
@@ -215,6 +239,9 @@ void CTPPSProtonReconstructionValidator::analyze(const edm::Event& iEvent, const
       mom_56 = mom;
     }
   }
+
+  // TODO
+  //printf("proton_45_set=%u, proton_56_set=%u\n", proton_45_set, proton_56_set);
 
   // do comparison
   for (const auto &rec_pr : *hRecoProtons)
@@ -278,15 +305,23 @@ void CTPPSProtonReconstructionValidator::FillPlots(unsigned int meth_idx, unsign
     xi_simu, th_x_simu, th_y_simu, vtx_y_simu,
     xi_reco, th_x_reco, th_y_reco, vtx_y_reco
   );
-  */
+
+  if (meth_idx == 0 && (xi_reco - xi_simu) < -0.10)
+  {
+    printf("- SIMU: xi=%.4f, th_x=%.3E, th_y=%.3E, vtx_y=%.3E; RECO: xi=%.4f, th_x=%.3E, th_y=%.3E, vtx_y=%.3E\n",
+      xi_simu, th_x_simu, th_y_simu, vtx_y_simu,
+      xi_reco, th_x_reco, th_y_reco, vtx_y_reco);
+  }
 
   if (meth_idx == 1 && fabs(xi_reco - xi_simu) > 0.01)
     printf("   PROBLEM: xi diff too large\n");
+  */
 
   auto &p = plots[meth_idx][idx];
   if (p.h_de_xi == NULL)
     p.Init();
 
+  p.h_xi_reco_vs_xi_simu->Fill(xi_simu, xi_reco);
   p.h_de_xi->Fill(xi_reco - xi_simu);
   p.p_de_xi_vs_xi_simu->Fill(xi_simu, xi_reco - xi_simu);
 
