@@ -37,8 +37,8 @@ RandomXiThetaGunProducer::RandomXiThetaGunProducer(const edm::ParameterSet& pset
   theta_y_mean(pset.getParameter<double>("theta_y_mean")),
   theta_y_sigma(pset.getParameter<double>("theta_y_sigma")),
 
-  produceSector45(pset.getParameter<bool>("produceSector45")),
-  produceSector56(pset.getParameter<bool>("produceSector56"))
+  nParticlesSector45(pset.getParameter<unsigned int>("nParticlesSector45")),
+  nParticlesSector56(pset.getParameter<unsigned int>("nParticlesSector56"))
 {
   produces<HepMCProduct>("unsmeared");
 }
@@ -68,11 +68,19 @@ void RandomXiThetaGunProducer::produce(edm::Event &e, const edm::EventSetup& es)
   double mass = pData->mass().value();
 
   // generate particles
-  if (produceSector45)
-    GenerateParticle(+1., mass, 1, engine, vtx);
+  unsigned int barcode = 0;
 
-  if (produceSector56)
-    GenerateParticle(-1., mass, 2, engine, vtx);
+  for (unsigned int i = 0; i < nParticlesSector45; i++)
+  {
+    barcode++;
+    GenerateParticle(+1., mass, barcode, engine, vtx);
+  }
+
+  for (unsigned int i = 0; i < nParticlesSector56; i++)
+  {
+    barcode++;
+    GenerateParticle(-1., mass, barcode, engine, vtx);
+  }
 
   // save output
   std::unique_ptr<HepMCProduct> output(new HepMCProduct()) ;

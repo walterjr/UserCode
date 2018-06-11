@@ -36,8 +36,8 @@ process.generator = cms.EDProducer("RandomXiThetaGunProducer",
   theta_y_mean = cms.double(0),
   theta_y_sigma = cms.double(100E-6),
 
-  produceSector45 = cms.bool(True),
-  produceSector56 = cms.bool(True),
+  nParticlesSector45 = cms.uint32(1),
+  nParticlesSector56 = cms.uint32(1),
 )
 
 # random seeds

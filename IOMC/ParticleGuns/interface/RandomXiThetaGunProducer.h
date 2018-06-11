@@ -40,8 +40,8 @@ class RandomXiThetaGunProducer : public one::EDProducer<>
     double theta_x_mean, theta_x_sigma;
     double theta_y_mean, theta_y_sigma;
 
-    bool produceSector45;
-    bool produceSector56;
+    unsigned int nParticlesSector45;
+    unsigned int nParticlesSector56;
 };
 
 } 
