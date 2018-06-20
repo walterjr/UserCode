@@ -47,6 +47,7 @@ class CTPPSProtonReconstruction : public edm::stream::EDProducer<>
     edm::FileInPath opticsFileBeam1_, opticsFileBeam2_;
 
     bool applyExperimentalAlignment;
+    edm::FileInPath alignmentFile_;
 
     AlignmentResultsCollection alignmentCollection_;
 
@@ -71,6 +72,7 @@ CTPPSProtonReconstruction::CTPPSProtonReconstruction( const edm::ParameterSet& i
   opticsFileBeam2_            ( iConfig.getParameter<edm::FileInPath>( "opticsFileBeam2" ) ),
 
   applyExperimentalAlignment  ( iConfig.getParameter<bool>( "applyExperimentalAlignment" ) ),
+  alignmentFile_              ( iConfig.getParameter<edm::FileInPath>( "alignmentFile" ) ),
 
   algorithm_(opticsFileBeam1_.fullPath(), opticsFileBeam2_.fullPath(), beamConditions_, verbosity)
 {
@@ -78,7 +80,7 @@ CTPPSProtonReconstruction::CTPPSProtonReconstruction( const edm::ParameterSet& i
 
   //  load alignment collection
   if (applyExperimentalAlignment)
-    alignmentCollection_.Load("data/collect_alignments.out");
+    alignmentCollection_.Load(alignmentFile_.fullPath());
 
   // load fill-alignment mapping
   InitFillInfoCollection();

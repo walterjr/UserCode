@@ -16,5 +16,6 @@ ctppsProtonReconstruction = cms.EDProducer('CTPPSProtonReconstruction',
     opticsFileBeam1 = cms.FileInPath('CondFormats/CTPPSOpticsObjects/data/2016_preTS2/version4-vale1/beam1/parametrization_6500GeV_0p4_185_reco.root'),
     opticsFileBeam2 = cms.FileInPath('CondFormats/CTPPSOpticsObjects/data/2016_preTS2/version4-vale1/beam2/parametrization_6500GeV_0p4_185_reco.root'),
 
-    applyExperimentalAlignment = cms.bool(False)
+    applyExperimentalAlignment = cms.bool(False),
+    alignmentFile = cms.FileInPath("")
 )
