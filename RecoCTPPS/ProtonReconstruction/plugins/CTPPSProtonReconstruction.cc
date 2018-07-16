@@ -131,6 +131,7 @@ void CTPPSProtonReconstruction::produce(Event& event, const EventSetup&)
     unsigned int ret = fillInfoCollection.FindByRun(event.id().run(), fillInfo);
     if (ret != 0)
     {
+      printf("ERROR: cannot get fill info.\n");
       event.put(move(output));
       return;
     }
@@ -138,6 +139,7 @@ void CTPPSProtonReconstruction::produce(Event& event, const EventSetup&)
     const auto alignment_it = alignmentCollection_.find(fillInfo.alignmentTag);
     if (alignment_it == alignmentCollection_.end())
     {
+      printf("ERROR: cannot get alignment.\n");
       event.put(move(output));
       return;
     }
