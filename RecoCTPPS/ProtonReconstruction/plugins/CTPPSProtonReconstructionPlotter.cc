@@ -23,6 +23,7 @@
 #include "TGraph.h"
 #include "TH1D.h"
 #include "TH2D.h"
+#include "TProfile.h"
 
 //----------------------------------------------------------------------------------------------------
 
@@ -124,10 +125,16 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
     struct SingleMultiCorrelationPlots
     {
       TH2D *h_xi_mu_vs_xi_si = NULL;
+      TH1D *h_xi_diff_mu_si = NULL;
+      TH1D *h_xi_diff_si_mu = NULL;
+      TProfile *h_xi_diff_si_mu_vs_xi_mu = NULL;
 
       void Init()
       {
         h_xi_mu_vs_xi_si = new TH2D("", ";#xi_{single};#xi_{multi}", 100, 0., 0.2, 100, 0., 0.2);
+        h_xi_diff_mu_si = new TH1D("", ";#xi_{multi} - #xi_{single}", 100, -0.1, +0.1);
+        h_xi_diff_si_mu = new TH1D("", ";#xi_{single} - #xi_{multi}", 100, -0.1, +0.1);
+        h_xi_diff_si_mu_vs_xi_mu = new TProfile("", ";#xi_{multi};#xi_{single} - #xi_{multi}", 100, 0., 0.2);
       }
 
       void Fill(const reco::ProtonTrack &p_single, const reco::ProtonTrack &p_multi)
@@ -138,12 +145,18 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
         if (p_single.valid() && p_multi.valid())
         {
           h_xi_mu_vs_xi_si->Fill(p_single.xi(), p_multi.xi());
+          h_xi_diff_mu_si->Fill(p_multi.xi() - p_single.xi());
+          h_xi_diff_si_mu->Fill(p_single.xi() - p_multi.xi());
+          h_xi_diff_si_mu_vs_xi_mu->Fill(p_multi.xi(), p_single.xi() - p_multi.xi());
         }
       }
 
       void Write() const
       {
         h_xi_mu_vs_xi_si->Write("h_xi_mu_vs_xi_si");
+        h_xi_diff_mu_si->Write("h_xi_diff_mu_si");
+        h_xi_diff_si_mu->Write("h_xi_diff_si_mu");
+        h_xi_diff_si_mu_vs_xi_mu->Write("h_xi_diff_si_mu_vs_xi_mu");
       }
     };
 
