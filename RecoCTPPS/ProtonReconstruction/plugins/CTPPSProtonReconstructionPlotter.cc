@@ -255,6 +255,7 @@ void CTPPSProtonReconstructionPlotter::analyze(const edm::Event &event, const ed
     n_non_empty_events++;
 
   // track plots
+/*
   const CTPPSLocalTrackLite *tr_L_N = NULL;
   const CTPPSLocalTrackLite *tr_L_F = NULL;
   const CTPPSLocalTrackLite *tr_R_N = NULL;
@@ -270,10 +271,12 @@ void CTPPSProtonReconstructionPlotter::analyze(const edm::Event &event, const ed
     if (decRPId == 102) tr_R_N = &tr;
     if (decRPId == 103) tr_R_F = &tr;
   }
+*/
 
-  bool x_correlation_L = false;
-  bool x_correlation_R = false;
+  bool x_correlation_L = true;
+  bool x_correlation_R = true;
 
+/*
   if (tr_L_N && tr_L_F)
   {
     const double de = tr_L_F->getX() - tr_L_N->getX();
@@ -291,6 +294,7 @@ void CTPPSProtonReconstructionPlotter::analyze(const edm::Event &event, const ed
     if (fabs(de + 0.81) < 2. * 0.24)
       x_correlation_R = true;
   }
+*/
 
   // make single-RP-reco plots
   for (const auto & proton : *recoProtons)
