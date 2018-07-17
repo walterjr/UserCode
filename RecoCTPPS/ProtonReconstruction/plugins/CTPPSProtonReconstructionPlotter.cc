@@ -1,8 +1,8 @@
 /****************************************************************************
 *
 * Authors:
-*  Jan Kašpar (jan.kaspar@gmail.com) 
-*    
+*  Jan Kašpar (jan.kaspar@gmail.com)
+*
 ****************************************************************************/
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -33,7 +33,7 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
     explicit CTPPSProtonReconstructionPlotter(const edm::ParameterSet&);
     ~CTPPSProtonReconstructionPlotter() {}
 
-  private: 
+  private:
     virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
 
     virtual void endJob() override;
@@ -74,6 +74,8 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
     struct MultiRPPlots
     {
       TH1D *h_xi=NULL, *h_th_x=NULL, *h_th_y=NULL, *h_vtx_y=NULL, *h_chi_sq=NULL, *h_chi_sq_norm=NULL;
+      TH2D *h2_th_x_vs_xi = NULL, *h2_th_y_vs_xi = NULL;
+      TProfile *p_th_x_vs_xi = NULL, *p_th_y_vs_xi = NULL;
 
       void Init()
       {
@@ -86,6 +88,12 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
 
         h_chi_sq = new TH1D("", ";#chi^{2}", 100, 0., 0.);
         h_chi_sq_norm = new TH1D("", ";#chi^{2}/ndf", 100, 0., 5.);
+
+        h2_th_x_vs_xi = new TH2D("", ";#xi;#theta_{x}   (rad)", 100, 0., 0.2, 100, -500E-6, +500E-6);
+        h2_th_y_vs_xi = new TH2D("", ";#xi;#theta_{y}   (rad)", 100, 0., 0.2, 100, -500E-6, +500E-6);
+
+        p_th_x_vs_xi = new TProfile("", ";#xi;#theta_{x}   (rad)", 100, 0., 0.2);
+        p_th_y_vs_xi = new TProfile("", ";#xi;#theta_{y}   (rad)", 100, 0., 0.2);
       }
 
       void Fill(const reco::ProtonTrack &p)
@@ -95,10 +103,13 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
 
         if (p.valid())
         {
+          const double th_x = p.direction().x() / p.direction().mag();
+          const double th_y = p.direction().y() / p.direction().mag();
+
           h_xi->Fill(p.xi());
 
-          h_th_x->Fill(p.direction().x() / p.direction().mag());
-          h_th_y->Fill(p.direction().y() / p.direction().mag());
+          h_th_x->Fill(th_x);
+          h_th_y->Fill(th_y);
 
           h_vtx_y->Fill(p.vertex().y());
 
@@ -106,6 +117,12 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
 
           if (p.fitNDF > 0)
             h_chi_sq_norm->Fill(p.fitChiSq / p.fitNDF);
+
+          h2_th_x_vs_xi->Fill(p.xi(), th_x);
+          h2_th_y_vs_xi->Fill(p.xi(), th_y);
+
+          p_th_x_vs_xi->Fill(p.xi(), th_x);
+          p_th_y_vs_xi->Fill(p.xi(), th_y);
         }
       }
 
@@ -117,6 +134,12 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
         h_vtx_y->Write("h_vtx_y");
         h_chi_sq->Write("h_chi_sq");
         h_chi_sq_norm->Write("h_chi_sq_norm");
+
+        h2_th_x_vs_xi->Write("h2_th_x_vs_xi");
+        h2_th_y_vs_xi->Write("h2_th_y_vs_xi");
+
+        p_th_x_vs_xi->Write("p_th_x_vs_xi");
+        p_th_y_vs_xi->Write("p_th_y_vs_xi");
       }
     };
 
@@ -162,7 +185,41 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
 
     std::map<unsigned int, SingleMultiCorrelationPlots> singleMultiCorrelationPlots;
 
+    struct ArmCorrelationPlots
+    {
+      TH1D *h_xi_si_diffNF = NULL;
+      TProfile *p_xi_si_diffNF_vs_xi_mu = NULL;
+
+      void Init()
+      {
+        h_xi_si_diffNF = new TH1D("", ";#xi_{sF} - #xi_{sN}", 100, -0.02, +0.02);
+        p_xi_si_diffNF_vs_xi_mu = new TProfile("", ";#xi_{m};#xi_{sF} - #xi_{sN}", 100, 0., 0.2);
+      }
+
+      void Fill(const reco::ProtonTrack &p_s_N, const reco::ProtonTrack &p_s_F, const reco::ProtonTrack &p_m)
+      {
+        if (!h_xi_si_diffNF)
+          Init();
+
+        if (p_s_N.valid() && p_s_F.valid() && p_m.valid())
+        {
+          h_xi_si_diffNF->Fill(p_s_F.xi() - p_s_N.xi());
+          p_xi_si_diffNF_vs_xi_mu->Fill(p_m.xi(), p_s_F.xi() - p_s_N.xi());
+        }
+      }
+
+      void Write() const
+      {
+        h_xi_si_diffNF->Write("h_xi_si_diffNF");
+        p_xi_si_diffNF_vs_xi_mu->Write("p_xi_si_diffNF_vs_xi_mu");
+      }
+    };
+
+    std::map<unsigned int, ArmCorrelationPlots> armCorrelationPlots;
+
     TH1D *h_de_x_f_n_L, *h_de_x_f_n_R;
+
+    unsigned int n_non_empty_events;
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -179,6 +236,8 @@ CTPPSProtonReconstructionPlotter::CTPPSProtonReconstructionPlotter(const edm::Pa
 {
   h_de_x_f_n_L = new TH1D("h_de_x_f_n_L", ";x_{LF} - x_{LN}   (mm)", 100, -3., +3.);
   h_de_x_f_n_R = new TH1D("h_de_x_f_n_R", ";x_{RF} - x_{RN}   (mm)", 100, -3., +3.);
+
+  n_non_empty_events = 0;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -191,6 +250,9 @@ void CTPPSProtonReconstructionPlotter::analyze(const edm::Event &event, const ed
 
   Handle<vector<reco::ProtonTrack>> recoProtons;
   event.getByToken(tokenRecoProtons, recoProtons);
+
+  if (recoProtons->size() > 0)
+    n_non_empty_events++;
 
   // track plots
   const CTPPSLocalTrackLite *tr_L_N = NULL;
@@ -282,12 +344,39 @@ void CTPPSProtonReconstructionPlotter::analyze(const edm::Event &event, const ed
       singleMultiCorrelationPlots[idx].Fill(pi, pj);
     }
   }
+
+  // arm correlation plots
+  const reco::ProtonTrack *p_arm0_s_N = NULL, *p_arm0_s_F = NULL, *p_arm0_m = NULL;
+  const reco::ProtonTrack *p_arm1_s_N = NULL, *p_arm1_s_F = NULL, *p_arm1_m = NULL;
+
+  for (const auto & proton : *recoProtons)
+  {
+    CTPPSDetId rpId(* proton.contributingRPIds.begin());
+    unsigned int rpDecId = rpId.arm()*100 + rpId.station()*10 + rpId.rp();
+
+    if (proton.method == reco::ProtonTrack::rmMultiRP && proton.lhcSector == reco::ProtonTrack::sector45) p_arm0_m = &proton;
+    if (proton.method == reco::ProtonTrack::rmMultiRP && proton.lhcSector == reco::ProtonTrack::sector56) p_arm1_m = &proton;
+
+    if (proton.method == reco::ProtonTrack::rmSingleRP && rpDecId == 2) p_arm0_s_N = &proton;
+    if (proton.method == reco::ProtonTrack::rmSingleRP && rpDecId == 3) p_arm0_s_F = &proton;
+
+    if (proton.method == reco::ProtonTrack::rmSingleRP && rpDecId == 102) p_arm1_s_N = &proton;
+    if (proton.method == reco::ProtonTrack::rmSingleRP && rpDecId == 103) p_arm1_s_F = &proton;
+  }
+
+  if (p_arm0_s_N && p_arm0_s_F && p_arm0_m)
+    armCorrelationPlots[0].Fill(*p_arm0_s_N, *p_arm0_s_F, *p_arm0_m);
+
+  if (p_arm1_s_N && p_arm1_s_F && p_arm1_m)
+    armCorrelationPlots[1].Fill(*p_arm1_s_N, *p_arm1_s_F, *p_arm1_m);
 }
 
 //----------------------------------------------------------------------------------------------------
 
 void CTPPSProtonReconstructionPlotter::endJob()
 {
+  printf(">> CTPPSProtonReconstructionPlotter: n_non_empty_events = %u\n", n_non_empty_events);
+
   TFile *f_out = TFile::Open(outputFile.c_str(), "recreate");
 
   h_de_x_f_n_L->Write();
@@ -298,7 +387,7 @@ void CTPPSProtonReconstructionPlotter::endJob()
   {
     char buf[100];
     sprintf(buf, "rp%u", it.first);
-    gDirectory = d_singleRPPlots->mkdir(buf); 
+    gDirectory = d_singleRPPlots->mkdir(buf);
     it.second.Write();
   }
 
@@ -307,7 +396,7 @@ void CTPPSProtonReconstructionPlotter::endJob()
   {
     char buf[100];
     sprintf(buf, "arm%u", it.first);
-    gDirectory = d_multiRPPlots->mkdir(buf); 
+    gDirectory = d_multiRPPlots->mkdir(buf);
     it.second.Write();
   }
 
@@ -319,7 +408,18 @@ void CTPPSProtonReconstructionPlotter::endJob()
 
     char buf[100];
     sprintf(buf, "si_rp%u_mu_arm%u", si_rp, mu_arm);
-    gDirectory = d_singleMultiCorrelationPlots->mkdir(buf); 
+    gDirectory = d_singleMultiCorrelationPlots->mkdir(buf);
+    it.second.Write();
+  }
+
+  TDirectory *d_armCorrelationPlots = f_out->mkdir("armCorrelationPlots");
+  for (const auto it : armCorrelationPlots)
+  {
+    unsigned int arm = it.first;
+
+    char buf[100];
+    sprintf(buf, "arm%u", arm);
+    gDirectory = d_armCorrelationPlots->mkdir(buf);
     it.second.Write();
   }
 
