@@ -17,14 +17,15 @@ function SubmitOneDir()
 	echo "* $fill, $stream"
 
 	# get input
+	input=""
 	for f in `eos ls "$eos_dir"|grep $tag|grep "$selection.root"`
 	do
 		if [ -n "$input" ]
 		then
-			input="$input,\n"
+			input="$input\n"
 		fi
 
-		input="$input    \"root://eostotem.cern.ch/${eos_dir}/${f}\""
+		input="${input}process.source.fileNames.append(\"root://eostotem.cern.ch/${eos_dir}/${f}\")"
 	done
 
 	for alignment in ${alignments[*]}
@@ -32,7 +33,7 @@ function SubmitOneDir()
 		echo "  $alignment"
 
 		# make work directory
-		dir="$top_dir/fill_$fill/$stream/$alignment"
+		dir="$top_dir/fill_$fill/$stream/alignment_$alignment"
 		mkdir -p "$dir"
 
 		full_dir="`pwd -P`/$dir"
@@ -76,7 +77,7 @@ function SubmitOneGroup()
 queue="8nh"
 
 alignments=(
-	#"2017_01_17"
+	"2017_01_17"
 	"new"
 	#"2018_07_17"
 )

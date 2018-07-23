@@ -14,11 +14,10 @@ process.MessageLogger = cms.Service("MessageLogger",
 
 # raw data source
 process.source = cms.Source("PoolSource",
-  fileNames = cms.untracked.vstring(
-$input
-  )
+  fileNames = cms.untracked.vstring()
   #lumisToProcess = cms.untracked.VLuminosityBlockRange("$run:1-$run:max")
 )
+$input
 
 process.maxEvents = cms.untracked.PSet(
   input = cms.untracked.int32(10000)
