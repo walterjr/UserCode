@@ -113,7 +113,7 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
 
         h2_th_x_vs_xi = new TH2D("", ";#xi;#theta_{x}   (rad)", 100, 0., 0.2, 100, -500E-6, +500E-6);
         h2_th_y_vs_xi = new TH2D("", ";#xi;#theta_{y}   (rad)", 100, 0., 0.2, 100, -500E-6, +500E-6);
-        h2_vtx_y_vs_xi = new TH2D("", ";#xi;vtx_{y}   (mm)", 100, 0., 0.2, 100, -100E-3, +100E-3);
+        h2_vtx_y_vs_xi = new TH2D("", ";#xi;vtx_{y}   (mm)", 100, 0., 0.2, 100, -500E-3, +500E-3);
 
         p_th_x_vs_xi = new TProfile("", ";#xi;#theta_{x}   (rad)", 100, 0., 0.2);
         p_th_y_vs_xi = new TProfile("", ";#xi;#theta_{y}   (rad)", 100, 0., 0.2);
