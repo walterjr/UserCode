@@ -35,6 +35,8 @@ function SubmitOneDir()
 		dir="$top_dir/fill_$fill/$stream/$alignment"
 		mkdir -p "$dir"
 
+		full_dir="`pwd -P`/$dir"
+
 		# make config with input files
 		cat "template_cfg.py" | sed -e "\
 				s|\$input|$input|g;\
