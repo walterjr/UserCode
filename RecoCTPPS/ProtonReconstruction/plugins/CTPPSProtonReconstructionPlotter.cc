@@ -21,6 +21,7 @@
 
 #include "TFile.h"
 #include "TGraph.h"
+#include "TGraphErrors.h"
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TProfile.h"
@@ -42,6 +43,27 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
     edm::EDGetTokenT<std::vector<reco::ProtonTrack>> tokenRecoProtons;
 
     std::string outputFile;
+
+    static void ProfileToRMSGraph(TProfile *p, TGraphErrors *g)
+    {
+        for (int bi = 1; bi <= p->GetNbinsX(); ++bi)
+        {
+            double c = p->GetBinCenter(bi);
+
+            double N = p->GetBinEntries(bi);
+            double Sy = p->GetBinContent(bi) * N;
+            double Syy = p->GetSumw2()->At(bi);
+
+            double si_sq = Syy/N - Sy*Sy/N/N;
+            double si = (si_sq >= 0.) ? sqrt(si_sq) : 0.;
+            double si_unc_sq = si_sq / 2. / N;	// Gaussian approximation
+            double si_unc = (si_unc_sq >= 0.) ? sqrt(si_unc_sq) : 0.;
+
+            int idx = g->GetN();
+            g->SetPoint(idx, c, si);
+            g->SetPointError(idx, 0., si_unc);
+        }
+    }
 
     struct SingleRPPlots
     {
@@ -74,8 +96,8 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
     struct MultiRPPlots
     {
       TH1D *h_xi=NULL, *h_th_x=NULL, *h_th_y=NULL, *h_vtx_y=NULL, *h_chi_sq=NULL, *h_chi_sq_norm=NULL;
-      TH2D *h2_th_x_vs_xi = NULL, *h2_th_y_vs_xi = NULL;
-      TProfile *p_th_x_vs_xi = NULL, *p_th_y_vs_xi = NULL;
+      TH2D *h2_th_x_vs_xi = NULL, *h2_th_y_vs_xi = NULL, *h2_vtx_y_vs_xi = NULL;
+      TProfile *p_th_x_vs_xi = NULL, *p_th_y_vs_xi = NULL, *p_vtx_y_vs_xi = NULL;
 
       void Init()
       {
@@ -91,9 +113,11 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
 
         h2_th_x_vs_xi = new TH2D("", ";#xi;#theta_{x}   (rad)", 100, 0., 0.2, 100, -500E-6, +500E-6);
         h2_th_y_vs_xi = new TH2D("", ";#xi;#theta_{y}   (rad)", 100, 0., 0.2, 100, -500E-6, +500E-6);
+        h2_vtx_y_vs_xi = new TH2D("", ";#xi;vtx_{y}   (mm)", 100, 0., 0.2, 100, -100E-3, +100E-3);
 
         p_th_x_vs_xi = new TProfile("", ";#xi;#theta_{x}   (rad)", 100, 0., 0.2);
         p_th_y_vs_xi = new TProfile("", ";#xi;#theta_{y}   (rad)", 100, 0., 0.2);
+        p_vtx_y_vs_xi = new TProfile("", ";#xi;vtx_{y}   (mm)", 100, 0., 0.2);
       }
 
       void Fill(const reco::ProtonTrack &p)
@@ -120,26 +144,41 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
 
           h2_th_x_vs_xi->Fill(p.xi(), th_x);
           h2_th_y_vs_xi->Fill(p.xi(), th_y);
+          h2_vtx_y_vs_xi->Fill(p.xi(), p.vertex().y());
 
           p_th_x_vs_xi->Fill(p.xi(), th_x);
           p_th_y_vs_xi->Fill(p.xi(), th_y);
+          p_vtx_y_vs_xi->Fill(p.xi(), p.vertex().y());
         }
       }
 
       void Write() const
       {
-        h_xi->Write("h_xi");
-        h_th_x->Write("h_th_x");
-        h_th_y->Write("h_th_y");
-        h_vtx_y->Write("h_vtx_y");
         h_chi_sq->Write("h_chi_sq");
         h_chi_sq_norm->Write("h_chi_sq_norm");
 
-        h2_th_x_vs_xi->Write("h2_th_x_vs_xi");
-        h2_th_y_vs_xi->Write("h2_th_y_vs_xi");
+        h_xi->Write("h_xi");
 
+        h_th_x->Write("h_th_x");
+        h2_th_x_vs_xi->Write("h2_th_x_vs_xi");
         p_th_x_vs_xi->Write("p_th_x_vs_xi");
+        TGraphErrors *g_th_x_RMS_vs_xi = new TGraphErrors();
+        ProfileToRMSGraph(p_th_x_vs_xi, g_th_x_RMS_vs_xi);
+        g_th_x_RMS_vs_xi->Write("g_th_x_RMS_vs_xi");
+
+        h_th_y->Write("h_th_y");
+        h2_th_y_vs_xi->Write("h2_th_y_vs_xi");
         p_th_y_vs_xi->Write("p_th_y_vs_xi");
+        TGraphErrors *g_th_y_RMS_vs_xi = new TGraphErrors();
+        ProfileToRMSGraph(p_th_y_vs_xi, g_th_y_RMS_vs_xi);
+        g_th_y_RMS_vs_xi->Write("g_th_y_RMS_vs_xi");
+
+        h_vtx_y->Write("h_vtx_y");
+        h2_vtx_y_vs_xi->Write("h2_vtx_y_vs_xi");
+        p_vtx_y_vs_xi->Write("p_vtx_y_vs_xi");
+        TGraphErrors *g_vtx_y_RMS_vs_xi = new TGraphErrors();
+        ProfileToRMSGraph(p_vtx_y_vs_xi, g_vtx_y_RMS_vs_xi);
+        g_vtx_y_RMS_vs_xi->Write("g_vtx_y_RMS_vs_xi");
       }
     };
 
