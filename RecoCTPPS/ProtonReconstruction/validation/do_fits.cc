@@ -1,5 +1,6 @@
 #include "TFile.h"
 #include "TProfile.h"
+#include "TGraphErrors.h"
 #include "TF1.h"
 
 #include <string>
@@ -83,6 +84,29 @@ int main(int argc, char **argv)
     gDirectory = mu_dir->mkdir(rec.dir.c_str());
     p_x->Write("p_th_x_vs_xi");
     p_y->Write("p_th_y_vs_xi");
+
+    //----------
+
+    TGraphErrors *g_th_x_RMS_vs_xi = (TGraphErrors *) f_in->Get((string("multiRPPlots/") + rec.dir + "/g_th_x_RMS_vs_xi").c_str());
+    TGraphErrors *g_th_y_RMS_vs_xi = (TGraphErrors *) f_in->Get((string("multiRPPlots/") + rec.dir + "/g_th_y_RMS_vs_xi").c_str());
+
+    ff->SetParameter(0, 0.);
+    g_th_x_RMS_vs_xi->Fit(ff, "Q", "", rec.min, rec.max);
+
+    ff->SetParameter(0, 0.);
+    g_th_y_RMS_vs_xi->Fit(ff, "Q", "", rec.min, rec.max);
+
+    g_th_x_RMS_vs_xi->Write("g_th_x_RMS_vs_xi");
+    g_th_y_RMS_vs_xi->Write("g_th_y_RMS_vs_xi");
+
+    //----------
+
+    TGraphErrors *g_vtx_y_RMS_vs_xi = (TGraphErrors *) f_in->Get((string("multiRPPlots/") + rec.dir + "/g_vtx_y_RMS_vs_xi").c_str());
+
+    ff->SetParameter(0, 0.);
+    g_vtx_y_RMS_vs_xi->Fit(ff, "Q", "", rec.min, rec.max);
+
+    g_vtx_y_RMS_vs_xi->Write("g_vtx_y_RMS_vs_xi");
   }
 
   // process si_mu
