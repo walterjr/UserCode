@@ -5,6 +5,7 @@
 
 !.gitignore
 
-data
+data_das
+data_eos
 
 do_fits
