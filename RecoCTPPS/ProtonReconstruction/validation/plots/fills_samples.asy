@@ -51,6 +51,14 @@ void AddDataSet(string p)
 
 void InitDataSets(string option="all")
 {
+	if (option == "very_short")
+	{
+		AddDataSet("phys_margin/fill_4947");
+		AddDataSet("phys_no_margin/fill_5288");
+
+		return;
+	}
+
 	if (option == "short")
 	{
 		AddDataSet("phys_margin/fill_4947");

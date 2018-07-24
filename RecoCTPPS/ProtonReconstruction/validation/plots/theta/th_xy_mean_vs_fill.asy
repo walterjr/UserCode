@@ -1,10 +1,9 @@
 import root;
 import pad_layout;
-
 include "../fills_samples.asy";
-InitDataSets();
 
 string topDir = "../../data_eos/";
+InitDataSets();
 
 string stream = "DoubleEG";
 
@@ -19,7 +18,7 @@ cols.push("arm1"); c_labels.push("sector 56 (R)");
 
 string projections[];
 pen p_pens[];
-//projections.push("x"); p_pens.push(blue);
+projections.push("x"); p_pens.push(blue);
 projections.push("y"); p_pens.push(red);
 
 //----------------------------------------------------------------------------------------------------
@@ -39,7 +38,7 @@ xTicksDef = LeftTicks(rotate(90)*Label(""), TickLabels, Step=1, step=0);
 
 xSizeDef = 15cm;
 
-//yTicksDef = RightTicks(50., 10.);
+yTicksDef = RightTicks(50., 10.);
 
 //----------------------------------------------------------------------------------------------------
 
@@ -56,7 +55,7 @@ for (int ai : alignments.keys)
 
 	for (int ci : cols.keys)
 	{
-		NewPad("fill", "RMS of $y^*\ung{\mu m}$");
+		NewPad("fill", "mean of $\th^*_{x}\ung{\mu rad}$");
 
 		for (int pri : projections.keys)
 		{
@@ -65,14 +64,14 @@ for (int ai : alignments.keys)
 				for (int dsi : fill_data[fi].datasets.keys)
 				{
 					string f = topDir + fill_data[fi].datasets[dsi].tag + "/" + stream + "/alignment_" + alignments[ai] + "/do_fits.root";
-					string on = "multiRPPlots/" + cols[ci] + "/g_vtx_" + projections[pri] + "_RMS_vs_xi|ff";
+					string on = "multiRPPlots/" + cols[ci] + "/p_th_" + projections[pri] + "_vs_xi|ff";
 		
 					RootObject obj = RootGetObject(f, on, error=false);
 					if (!obj.valid)
 						continue;
 		
-					real d = obj.rExec("GetParameter", 0) * 1e3;
-					real d_unc = obj.rExec("GetParError", 0) * 1e3;
+					real d = obj.rExec("GetParameter", 0) * 1e6;
+					real d_unc = obj.rExec("GetParError", 0) * 1e6;
 
 					mark m = GetDatasetMark(fill_data[fi].datasets[dsi]);
 					pen p = p_pens[pri];
@@ -84,21 +83,19 @@ for (int ai : alignments.keys)
 			}
 		}
 
-		limits((-1, 30.), (fill_data.length, +90), Crop);
+		limits((-1, -100.), (fill_data.length, +100), Crop);
 	}
 }
 
 //----------------------------------------------------------------------------------------------------
 
-/*
 NewPad(false);
 
 AddToLegend("$\th^*_x$", blue);
 AddToLegend("$\th^*_y$", red);
 
 AttachLegend();
-*/
 
 //----------------------------------------------------------------------------------------------------
 
-GShipout(hSkip=1mm, vSkip=0mm);
+GShipout(hSkip=0mm, vSkip=0mm);
