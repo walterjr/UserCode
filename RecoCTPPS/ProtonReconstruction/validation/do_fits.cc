@@ -8,6 +8,26 @@
 
 using namespace std;
 
+//----------------------------------------------------------------------------------------------------
+
+unsigned int missing_counter = 0;
+
+TObject* Load(TFile *f, const string &path, bool &process)
+{
+  TObject *obj = f->Get(path.c_str());
+
+  if (obj == NULL)
+  {
+    printf("ERROR: can't load object '%s'.\n", path.c_str());
+    missing_counter++;
+    process = false;
+  }
+
+  return obj;
+}
+
+//----------------------------------------------------------------------------------------------------
+
 int main(int argc, char **argv)
 {
   // parse command line
@@ -46,7 +66,7 @@ int main(int argc, char **argv)
   if (!f_in)
   {
     printf("ERROR: can't open input.\n");
-    return 1;
+    return 10;
   }
 
   // prepare output
@@ -56,101 +76,114 @@ int main(int argc, char **argv)
   TDirectory *mu_dir = f_out->mkdir("multiRPPlots");
   for (const auto &rec : mu_records)
   {
-    TProfile *p_x = (TProfile *) f_in->Get((string("multiRPPlots/") + rec.dir + "/p_th_x_vs_xi").c_str());
-    TProfile *p_y = (TProfile *) f_in->Get((string("multiRPPlots/") + rec.dir + "/p_th_y_vs_xi").c_str());
+    bool process = true;
 
-    if (p_x == NULL || p_y == NULL)
+    TProfile *p_x = (TProfile *) Load(f_in, "multiRPPlots/" + rec.dir + "/p_th_x_vs_xi", process);
+    TProfile *p_y = (TProfile *) Load(f_in, "multiRPPlots/" + rec.dir + "/p_th_y_vs_xi", process);
+
+    if (process)
     {
-      printf("ERROR: cannot load from directory '%s'.\n", rec.dir.c_str());
-      return 2;
+      ff->SetParameter(0, 0.);
+      p_x->Fit(ff, "Q", "", rec.min, rec.max);
+
+      ff_pol1->SetParameters(0., 0.);
+      p_x->Fit(ff_pol1, "Q+", "", rec.min, rec.max);
+
+      double x_min = 0., x_max = 0.;
+      if (rec.dir == "arm0") { x_min = 0.08; x_max = 0.11; }
+      if (rec.dir == "arm1") { x_min = 0.07; x_max = 0.12; }
+
+      ff->SetParameter(0, 0.);
+      p_y->Fit(ff, "Q", "", x_min, x_max);
+
+      ff_pol1->SetParameters(0., 0.);
+      p_y->Fit(ff_pol1, "Q+", "", x_min, x_max);
+
+      gDirectory = mu_dir->mkdir(rec.dir.c_str());
+      p_x->Write("p_th_x_vs_xi");
+      p_y->Write("p_th_y_vs_xi");
     }
 
-    ff->SetParameter(0, 0.);
-    p_x->Fit(ff, "Q", "", rec.min, rec.max);
+    //----------
 
-    ff_pol1->SetParameters(0., 0.);
-    p_x->Fit(ff_pol1, "Q+", "", rec.min, rec.max);
+    process = true;
 
-    double x_min = 0., x_max = 0.;
-    if (rec.dir == "arm0") { x_min = 0.08; x_max = 0.11; }
-    if (rec.dir == "arm1") { x_min = 0.07; x_max = 0.12; }
+    TGraphErrors *g_th_x_RMS_vs_xi = (TGraphErrors *) Load(f_in, "multiRPPlots/" + rec.dir + "/g_th_x_RMS_vs_xi", process);
+    TGraphErrors *g_th_y_RMS_vs_xi = (TGraphErrors *) Load(f_in, "multiRPPlots/" + rec.dir + "/g_th_y_RMS_vs_xi", process);
 
-    ff->SetParameter(0, 0.);
-    p_y->Fit(ff, "Q", "", x_min, x_max);
+    if (process)
+    {
+      ff->SetParameter(0, 0.);
+      g_th_x_RMS_vs_xi->Fit(ff, "Q", "", rec.min, rec.max);
 
-    ff_pol1->SetParameters(0., 0.);
-    p_y->Fit(ff_pol1, "Q+", "", x_min, x_max);
+      ff->SetParameter(0, 0.);
+      g_th_y_RMS_vs_xi->Fit(ff, "Q", "", rec.min, rec.max);
 
-    gDirectory = mu_dir->mkdir(rec.dir.c_str());
-    p_x->Write("p_th_x_vs_xi");
-    p_y->Write("p_th_y_vs_xi");
+      g_th_x_RMS_vs_xi->Write("g_th_x_RMS_vs_xi");
+      g_th_y_RMS_vs_xi->Write("g_th_y_RMS_vs_xi");
+    }
 
     //----------
 
-    TGraphErrors *g_th_x_RMS_vs_xi = (TGraphErrors *) f_in->Get((string("multiRPPlots/") + rec.dir + "/g_th_x_RMS_vs_xi").c_str());
-    TGraphErrors *g_th_y_RMS_vs_xi = (TGraphErrors *) f_in->Get((string("multiRPPlots/") + rec.dir + "/g_th_y_RMS_vs_xi").c_str());
+    process = true;
 
-    ff->SetParameter(0, 0.);
-    g_th_x_RMS_vs_xi->Fit(ff, "Q", "", rec.min, rec.max);
+    TGraphErrors *g_vtx_y_RMS_vs_xi = (TGraphErrors *) Load(f_in, "multiRPPlots/" + rec.dir + "/g_vtx_y_RMS_vs_xi", process);
 
-    ff->SetParameter(0, 0.);
-    g_th_y_RMS_vs_xi->Fit(ff, "Q", "", rec.min, rec.max);
+    if (process)
+    {
+      ff->SetParameter(0, 0.);
+      g_vtx_y_RMS_vs_xi->Fit(ff, "Q", "", rec.min, rec.max);
 
-    g_th_x_RMS_vs_xi->Write("g_th_x_RMS_vs_xi");
-    g_th_y_RMS_vs_xi->Write("g_th_y_RMS_vs_xi");
-
-    //----------
-
-    TGraphErrors *g_vtx_y_RMS_vs_xi = (TGraphErrors *) f_in->Get((string("multiRPPlots/") + rec.dir + "/g_vtx_y_RMS_vs_xi").c_str());
-
-    ff->SetParameter(0, 0.);
-    g_vtx_y_RMS_vs_xi->Fit(ff, "Q", "", rec.min, rec.max);
-
-    g_vtx_y_RMS_vs_xi->Write("g_vtx_y_RMS_vs_xi");
+      g_vtx_y_RMS_vs_xi->Write("g_vtx_y_RMS_vs_xi");
+    }
   }
 
   // process si_mu
   TDirectory *si_mu_dir = f_out->mkdir("singleMultiCorrelationPlots");
   for (const auto &rec : si_mu_records)
   {
-    TProfile *p = (TProfile *) f_in->Get((string("singleMultiCorrelationPlots/") + rec.dir + "/p_xi_diff_si_mu_vs_xi_mu").c_str());
+    bool process = true;
 
-    if (p == NULL)
+    TProfile *p = (TProfile *) Load(f_in, "singleMultiCorrelationPlots/" + rec.dir + "/p_xi_diff_si_mu_vs_xi_mu", process);
+
+    if (process)
     {
-      printf("ERROR: cannot load from directory '%s'.\n", rec.dir.c_str());
-      return 2;
+      ff->SetParameter(0, 0.);
+
+      p->Fit(ff, "Q", "", rec.min, rec.max);
+
+      gDirectory = si_mu_dir->mkdir(rec.dir.c_str());
+      p->Write("p_xi_diff_si_mu_vs_xi_mu");
     }
-
-    ff->SetParameter(0, 0.);
-
-    p->Fit(ff, "Q", "", rec.min, rec.max);
-
-    gDirectory = si_mu_dir->mkdir(rec.dir.c_str());
-    p->Write("p_xi_diff_si_mu_vs_xi_mu");
   }
 
   // process arm
   TDirectory *arm_dir = f_out->mkdir("armCorrelationPlots");
   for (const auto &rec : arm_records)
   {
-    TProfile *p = (TProfile *) f_in->Get((string("armCorrelationPlots/") + rec.dir + "/p_xi_si_diffNF_vs_xi_mu").c_str());
+    bool process = true;
 
-    if (p == NULL)
+    TProfile *p = (TProfile *) Load(f_in, "armCorrelationPlots/" + rec.dir + "/p_xi_si_diffNF_vs_xi_mu", process);
+
+    if (process)
     {
-      printf("ERROR: cannot load from directory '%s'.\n", rec.dir.c_str());
-      return 2;
+      ff->SetParameter(0, 0.);
+      p->Fit(ff, "Q", "", rec.min, rec.max);
+
+      gDirectory = arm_dir->mkdir(rec.dir.c_str());
+      p->Write("p_xi_si_diffNF_vs_xi_mu");
     }
-
-    ff->SetParameter(0, 0.);
-    p->Fit(ff, "Q", "", rec.min, rec.max);
-
-    gDirectory = arm_dir->mkdir(rec.dir.c_str());
-    p->Write("p_xi_si_diffNF_vs_xi_mu");
   }
 
   // clean up
   delete f_in;
   delete f_out;
+
+  if (missing_counter > 0)
+  {
+    printf("WARNING: %u plots missing.\n", missing_counter);
+    return 1;
+  }
 
   return 0;
 }

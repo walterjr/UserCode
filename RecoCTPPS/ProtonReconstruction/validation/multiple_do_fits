@@ -14,10 +14,22 @@ function ProcessOne()
 	do
 		#echo "    $d"
 		./do_fits "$d" &> "$d/do_fits.log"
-		if [ $? -ne 0 ]
-		then
-			echo "ERROR: run problem in $d"
-		fi
+
+        res="$?"
+
+        if [ $res -eq 0 ]
+        then
+            continue
+        fi
+
+        case $res in
+            1)
+			  echo "WARNING: some plots missing in $d"
+              ;;
+            *)
+			  echo "ERROR: run problem in $d"
+              ;;
+        esac
 	done
 }
 
