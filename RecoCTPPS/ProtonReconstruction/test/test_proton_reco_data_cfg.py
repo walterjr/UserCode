@@ -31,7 +31,7 @@ process.maxEvents = cms.untracked.PSet(
 
 process.load("RecoCTPPS.ProtonReconstruction.ctppsProtonReconstruction_cfi")
 process.ctppsProtonReconstruction.applyExperimentalAlignment = True
-process.ctppsProtonReconstruction.alignmentFile = "RecoCTPPS/ProtonReconstruction/data/collect_alignments_2018_07_17.out"
+process.ctppsProtonReconstruction.alignmentFile = "RecoCTPPS/ProtonReconstruction/data/collect_alignments_2018_07_24.3.out"
 
 process.ctppsProtonReconstructionPlotter = cms.EDAnalyzer("CTPPSProtonReconstructionPlotter",
     tagTracks = cms.InputTag("ctppsLocalTrackLiteProducer"),
