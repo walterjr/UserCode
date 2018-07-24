@@ -20,7 +20,7 @@
 
 #include "RecoCTPPS/ProtonReconstruction/interface/ProtonReconstructionAlgorithm.h"
 
-#include "RecoCTPPS/ProtonReconstruction/interface/alignment.h"
+#include "RecoCTPPS/ProtonReconstruction/interface/alignment_classes.h"
 #include "RecoCTPPS/ProtonReconstruction/interface/fill_info.h"
 
 //----------------------------------------------------------------------------------------------------
