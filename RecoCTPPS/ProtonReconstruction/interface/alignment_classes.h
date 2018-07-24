@@ -1,13 +1,17 @@
-#ifndef _alignment_h_
-#define _alignment_h_
+#ifndef _alignment_classes_h_
+#define _alignment_classes_h_
+
+#include <cstring>
+#include <cstdio>
+#include <cmath>
+#include <map>
+#include <vector>
+#include <set>
+#include <string>
 
 #include "DataFormats/CTPPSReco/interface/CTPPSLocalTrackLite.h"
 
 #include "DataFormats/CTPPSDetId/interface/TotemRPDetId.h"
-
-#include <string>
-#include <map>
-#include <cstring>
 
 //----------------------------------------------------------------------------------------------------
 
@@ -15,15 +19,23 @@ struct AlignmentResult
 {
 	double sh_x, sh_x_unc;		// mm
 	double sh_y, sh_y_unc;		// mm
+	double rot_z, rot_z_unc;	// rad
 
-	AlignmentResult(double _sh_x=0., double _sh_x_unc=0., double _sh_y=0., double _sh_y_unc=0.) :
-		sh_x(_sh_x), sh_x_unc(_sh_x_unc), sh_y(_sh_y), sh_y_unc(_sh_y_unc)
+	AlignmentResult(double _sh_x=0., double _sh_x_unc=0., double _sh_y=0., double _sh_y_unc=0., double _rot_z=0., double _rot_z_unc=0.) :
+		sh_x(_sh_x), sh_x_unc(_sh_x_unc), sh_y(_sh_y), sh_y_unc(_sh_y_unc), rot_z(_rot_z), rot_z_unc(_rot_z_unc)
 	{
 	}
 
 	void Write(FILE *f) const
 	{
-		fprintf(f, "sh_x=%.3f,sh_x_unc=%.3f,sh_y=%.3f,sh_y_unc=%.3f\n", sh_x, sh_x_unc, sh_y, sh_y_unc);
+		fprintf(f, "sh_x=%+.3f,sh_x_unc=%+.3f,sh_y=%+.3f,sh_y_unc=%+.3f,rot_z=%+.4f,rot_z_unc=%+.4f\n", sh_x, sh_x_unc, sh_y, sh_y_unc, rot_z, rot_z_unc);
+	}
+
+	CTPPSLocalTrackLite Apply(const CTPPSLocalTrackLite &tr) const
+	{
+		const double x = cos(rot_z) * tr.getX() + sin(rot_z) * tr.getY() + sh_x;
+		const double y = -sin(rot_z) * tr.getX() + cos(rot_z) * tr.getY() - sh_y;
+		return CTPPSLocalTrackLite(tr.getRPId(), x, 0., y, 0.);
 	}
 };
 
@@ -102,6 +114,18 @@ struct AlignmentResults : public std::map<unsigned int, AlignmentResult>
 				continue;
 			}
 
+			if (strcmp(s_key, "rot_z") == 0)
+			{
+				result.rot_z = atof(s_val);
+				continue;
+			}
+
+			if (strcmp(s_key, "rot_z_unc") == 0)
+			{
+				result.rot_z_unc = atof(s_val);
+				continue;
+			}
+
 			printf("ERROR in AlignmentResults::Add > unknown key: %s.\n", s_key);
 			return 3;
 		}
@@ -127,11 +151,7 @@ struct AlignmentResults : public std::map<unsigned int, AlignmentResult>
 			if (ait == end())
               throw cms::Exception("alignment") << "No alignment data for RP " << t.getRPId();
 
-            output.emplace_back(t.getRPId(),
-              t.getX() + ait->second.sh_x, t.getXUnc(),
-              t.getY() - ait->second.sh_y, t.getYUnc(),
-              t.getTime(), t.getTimeUnc()
-            );
+            output.emplace_back(ait->second.Apply(t));
 		}
 
 		return output;
