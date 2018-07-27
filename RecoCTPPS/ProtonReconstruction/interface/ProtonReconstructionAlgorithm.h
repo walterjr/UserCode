@@ -36,19 +36,17 @@ class ProtonReconstructionAlgorithm
 
     /// runs proton reconstruction with an optimal strategy
     /// input may only contain tracks from one arm
-    void reconstruct(const std::vector<const CTPPSLocalTrackLite*> &input, std::vector<reco::ProtonTrack> &output,
-      bool check_apertures=false) const
+    void reconstruct(const std::vector<const CTPPSLocalTrackLite*> &input, std::vector<reco::ProtonTrack> &output) const
     {
       // TODO: do something more useful
-      reconstructFromMultiRP(input, output, check_apertures);
+      reconstructFromMultiRP(input, output);
     }
 
     /// runs proton reconstruction using single-RP strategy
     void reconstructFromSingleRP(const std::vector<const CTPPSLocalTrackLite*> &input, std::vector<reco::ProtonTrack> &output) const;
 
     /// runs proton reconstruction using multiple-RP strategy
-    void reconstructFromMultiRP(const std::vector<const CTPPSLocalTrackLite*> &input, std::vector<reco::ProtonTrack> &output,
-      bool check_apertures=false) const;
+    void reconstructFromMultiRP(const std::vector<const CTPPSLocalTrackLite*> &input, std::vector<reco::ProtonTrack> &output) const;
 
   private:
     unsigned int verbosity;
@@ -72,7 +70,6 @@ class ProtonReconstructionAlgorithm
     {
       public:
         ChiSquareCalculator( const edm::ParameterSet& bc) :
-          check_apertures(false),
           beamConditions_( bc ),
           halfCrossingAngleSector45_( bc.getParameter<double>( "halfCrossingAngleSector45" ) ),
           halfCrossingAngleSector56_( bc.getParameter<double>( "halfCrossingAngleSector56" ) ),
@@ -85,7 +82,6 @@ class ProtonReconstructionAlgorithm
 
         const std::vector<const CTPPSLocalTrackLite*> *tracks;
         const std::map<unsigned int, RPOpticsData> *m_rp_optics;
-        bool check_apertures;
 
       private:
         edm::ParameterSet beamConditions_;

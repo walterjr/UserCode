@@ -81,7 +81,7 @@ ProtonReconstructionAlgorithm::ProtonReconstructionAlgorithm(const std::string &
       vtx0_y = yOffsetSector56_;
     }
 
-    const bool check_appertures = false;
+    const bool check_apertures = false;
     const bool invert_beam_coord_systems = true;
 
     TGraph *g_xi_vs_x = new TGraph();
@@ -92,26 +92,26 @@ ProtonReconstructionAlgorithm::ProtonReconstructionAlgorithm(const std::string &
     // input: all zero
     double kin_in_zero[5] = { 0., crossing_angle, vtx0_y, 0., 0. };
     double kin_out_zero[5] = { 0., 0., 0., 0., 0. };
-    rpod.optics->Transport(kin_in_zero, kin_out_zero, check_appertures, invert_beam_coord_systems);
+    rpod.optics->Transport(kin_in_zero, kin_out_zero, check_apertures, invert_beam_coord_systems);
 
     for (double xi = 0.; xi <= 0.201; xi += 0.005)
     {
       // input: only xi
       double kin_in_xi[5] = { 0., crossing_angle * (1. - xi), vtx0_y, 0., -xi };
       double kin_out_xi[5];
-        rpod.optics->Transport(kin_in_xi, kin_out_xi, check_appertures, invert_beam_coord_systems);
+        rpod.optics->Transport(kin_in_xi, kin_out_xi, check_apertures, invert_beam_coord_systems);
 
       // input: xi and vtx_y
       const double vtx_y = 10E-6;  // m
       double kin_in_xi_vtx_y[5] = { 0., crossing_angle * (1. - xi), vtx0_y + vtx_y, 0., -xi };
       double kin_out_xi_vtx_y[5];
-        rpod.optics->Transport(kin_in_xi_vtx_y, kin_out_xi_vtx_y, check_appertures, invert_beam_coord_systems);
+        rpod.optics->Transport(kin_in_xi_vtx_y, kin_out_xi_vtx_y, check_apertures, invert_beam_coord_systems);
 
       // input: xi and th_y
       const double th_y = 20E-6;  // rad
       double kin_in_xi_th_y[5] = { 0., crossing_angle * (1. - xi), vtx0_y, th_y * (1. - xi), -xi };
       double kin_out_xi_th_y[5];
-        rpod.optics->Transport(kin_in_xi_th_y, kin_out_xi_th_y, check_appertures, invert_beam_coord_systems);
+        rpod.optics->Transport(kin_in_xi_th_y, kin_out_xi_th_y, check_apertures, invert_beam_coord_systems);
 
       // fill graphs
       int idx = g_xi_vs_x->GetN();
@@ -167,10 +167,6 @@ ProtonReconstructionAlgorithm::~ProtonReconstructionAlgorithm()
 
 double ProtonReconstructionAlgorithm::ChiSquareCalculator::operator() (const double* parameters) const
 {
-  // TODO: make use of check_apertures
-  if (check_apertures == true)
-    throw cms::Exception("ProtonReconstructionAlgorithm") << "check_apertures = true not supported yet.";
-
   // extract proton parameters
   const double& xi = parameters[0];
   const double& th_x = parameters[1];
@@ -197,6 +193,7 @@ double ProtonReconstructionAlgorithm::ChiSquareCalculator::operator() (const dou
       vtx0_y = yOffsetSector56_;
     }
 
+    const bool check_apertures = false;
     const bool invert_beam_coord_systems = true;
 
     // get beam position at the RP, TODO: this can be pre-calculated for performace optimisation
@@ -244,8 +241,7 @@ double ProtonReconstructionAlgorithm::ChiSquareCalculator::operator() (const dou
 
 //----------------------------------------------------------------------------------------------------
 
-void ProtonReconstructionAlgorithm::reconstructFromMultiRP(const vector<const CTPPSLocalTrackLite*> &tracks,
-  vector<reco::ProtonTrack> &out, bool check_apertures) const
+void ProtonReconstructionAlgorithm::reconstructFromMultiRP(const vector<const CTPPSLocalTrackLite*> &tracks, vector<reco::ProtonTrack> &out) const
 {
   // need at least two tracks
   if (tracks.size() < 2)
@@ -308,7 +304,6 @@ void ProtonReconstructionAlgorithm::reconstructFromMultiRP(const vector<const CT
 
   chiSquareCalculator_->tracks = &tracks;
   chiSquareCalculator_->m_rp_optics = &m_rp_optics_;
-  chiSquareCalculator_->check_apertures = check_apertures;
 
   fitter_->FitFCN();
 
