@@ -60,6 +60,9 @@ class ProtonReconstructionAlgorithm
     {
       std::shared_ptr<LHCOpticsApproximator> optics;
       std::shared_ptr<TSpline3> s_xi_vs_x, s_y0_vs_xi, s_v_y_vs_xi, s_L_y_vs_xi;
+      double x0, y0;  // beam position, m
+      double ch0, ch1;  // linear approximation (intercept and slope) of x(xi)
+      double la0, la1;  // linear approximation (intercept and slope) of L_x(xi)
     };
 
     /// map: RP id --> optics data

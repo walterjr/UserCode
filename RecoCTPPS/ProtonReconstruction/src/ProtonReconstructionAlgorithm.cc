@@ -14,6 +14,8 @@
 #include "DataFormats/CTPPSDetId/interface/CTPPSDetId.h"
 #include "DataFormats/CTPPSDetId/interface/TotemRPDetId.h"
 
+#include "TF1.h"
+
 using namespace std;
 using namespace edm;
 
@@ -52,6 +54,8 @@ ProtonReconstructionAlgorithm::ProtonReconstructionAlgorithm(const std::string &
   // TODO: debug only
   //TFile *f_debug = new TFile("debug.root", "recreate");
 
+  TF1 *ff = new TF1("ff", "[0] + [1]*x");
+
   // build optics data for each object
   for (const auto &it : idNameMap)
   {
@@ -85,6 +89,9 @@ ProtonReconstructionAlgorithm::ProtonReconstructionAlgorithm(const std::string &
     const bool invert_beam_coord_systems = true;
 
     TGraph *g_xi_vs_x = new TGraph();
+    TGraph *g_x0_vs_xi = new TGraph();
+    TGraph *g_L_x_vs_xi = new TGraph();
+
     TGraph *g_y0_vs_xi = new TGraph();
     TGraph *g_v_y_vs_xi = new TGraph();
     TGraph *g_L_y_vs_xi = new TGraph();
@@ -94,12 +101,21 @@ ProtonReconstructionAlgorithm::ProtonReconstructionAlgorithm(const std::string &
     double kin_out_zero[5] = { 0., 0., 0., 0., 0. };
     rpod.optics->Transport(kin_in_zero, kin_out_zero, check_apertures, invert_beam_coord_systems);
 
-    for (double xi = 0.; xi <= 0.201; xi += 0.005)
+    rpod.x0 = kin_out_zero[0];
+    rpod.y0 = kin_out_zero[2];
+
+    for (double xi = 0.; xi <= 0.251; xi += 0.005)
     {
       // input: only xi
       double kin_in_xi[5] = { 0., crossing_angle * (1. - xi), vtx0_y, 0., -xi };
       double kin_out_xi[5];
         rpod.optics->Transport(kin_in_xi, kin_out_xi, check_apertures, invert_beam_coord_systems);
+
+      // input: xi and th_x
+      const double th_x = 20E-6;  // rad
+      double kin_in_xi_th_x[5] = { 0., (crossing_angle + th_x) * (1. - xi), vtx0_y, 0., -xi };
+      double kin_out_xi_th_x[5];
+        rpod.optics->Transport(kin_in_xi_th_x, kin_out_xi_th_x, check_apertures, invert_beam_coord_systems);
 
       // input: xi and vtx_y
       const double vtx_y = 10E-6;  // m
@@ -116,6 +132,9 @@ ProtonReconstructionAlgorithm::ProtonReconstructionAlgorithm(const std::string &
       // fill graphs
       int idx = g_xi_vs_x->GetN();
       g_xi_vs_x->SetPoint(idx, kin_out_xi[0] - kin_out_zero[0], xi);
+      g_x0_vs_xi->SetPoint(idx, xi, kin_out_xi[0] - kin_out_zero[0]);
+      g_L_x_vs_xi->SetPoint(idx, xi, (kin_out_xi_th_x[0] - kin_out_xi[0]) / th_x);
+
       g_y0_vs_xi->SetPoint(idx, xi, kin_out_xi[2] - kin_out_zero[2]);
       g_v_y_vs_xi->SetPoint(idx, xi, (kin_out_xi_vtx_y[2] - kin_out_xi[2]) / vtx_y);
       g_L_y_vs_xi->SetPoint(idx, xi, (kin_out_xi_th_y[2] - kin_out_xi[2]) / th_y);
@@ -133,16 +152,36 @@ ProtonReconstructionAlgorithm::ProtonReconstructionAlgorithm(const std::string &
     g_L_y_vs_xi->Write("g_L_y_vs_xi");
     */
 
+    // make splines
     rpod.s_xi_vs_x = make_shared<TSpline3>("", g_xi_vs_x->GetX(), g_xi_vs_x->GetY(), g_xi_vs_x->GetN());
-    delete g_xi_vs_x;
-
     rpod.s_y0_vs_xi = make_shared<TSpline3>("", g_y0_vs_xi->GetX(), g_y0_vs_xi->GetY(), g_y0_vs_xi->GetN());
-    delete g_y0_vs_xi;
-
     rpod.s_v_y_vs_xi = make_shared<TSpline3>("", g_v_y_vs_xi->GetX(), g_v_y_vs_xi->GetY(), g_v_y_vs_xi->GetN());
-    delete g_v_y_vs_xi;
-
     rpod.s_L_y_vs_xi = make_shared<TSpline3>("", g_L_y_vs_xi->GetX(), g_L_y_vs_xi->GetY(), g_L_y_vs_xi->GetN());
+
+    // get linear approximation
+    ff->SetParameters(0., 0.);
+    g_x0_vs_xi->Fit(ff, "Q");
+    g_x0_vs_xi->Fit(ff, "Q");
+    g_x0_vs_xi->Fit(ff, "Q");
+    rpod.ch0 = ff->GetParameter(0);
+    rpod.ch1 = ff->GetParameter(1);
+
+    ff->SetParameters(0., 0.);
+    g_L_x_vs_xi->Fit(ff, "Q");
+    g_L_x_vs_xi->Fit(ff, "Q");
+    g_L_x_vs_xi->Fit(ff, "Q");
+    rpod.la0 = ff->GetParameter(0);
+    rpod.la1 = ff->GetParameter(1);
+
+    //printf("ch0 = %.3f, ch1 = %.3f, la0 = %.3f, la1 = %.3f\n", rpod.ch0, rpod.ch1, rpod.la0, rpod.la1);
+
+    // free memory
+    delete g_xi_vs_x;
+    delete g_x0_vs_xi;
+    delete g_L_x_vs_xi;
+
+    delete g_y0_vs_xi;
+    delete g_v_y_vs_xi;
     delete g_L_y_vs_xi;
 
     // insert optics data
@@ -152,6 +191,9 @@ ProtonReconstructionAlgorithm::ProtonReconstructionAlgorithm(const std::string &
   // initialise fitter
   double pStart[] = { 0, 0, 0, 0 };
   fitter_->SetFCN( 4, *chiSquareCalculator_, pStart, 0, true );
+
+  // clean up
+  delete ff;
 
   // TODO: debug only
   //delete f_debug;
@@ -196,21 +238,15 @@ double ProtonReconstructionAlgorithm::ChiSquareCalculator::operator() (const dou
     const bool check_apertures = false;
     const bool invert_beam_coord_systems = true;
 
-    // get beam position at the RP, TODO: this can be pre-calculated for performace optimisation
-    auto oit = m_rp_optics->find(rpId);
-
-    double kin_in_zero[5] = { 0., crossing_angle, vtx0_y, 0., 0. };
-    double kin_out_zero[5];
-    oit->second.optics->Transport(kin_in_zero, kin_out_zero, check_apertures, invert_beam_coord_systems);
-
     // transport proton to the RP
+    auto oit = m_rp_optics->find(rpId);
     double kin_in[5] = { vtx_x, (th_x + crossing_angle) * (1. - xi), vtx0_y + vtx_y, th_y * (1. - xi), -xi };
     double kin_out[5];
     oit->second.optics->Transport(kin_in, kin_out, check_apertures, invert_beam_coord_systems);
 
     // proton position wrt. beam
-    const double& x = kin_out[0] - kin_out_zero[0];
-    const double& y = kin_out[2] - kin_out_zero[2];
+    const double& x = kin_out[0] - oit->second.x0;
+    const double& y = kin_out[2] - oit->second.y0;
 
     // calculate chi^2 contributions, convert track data mm --> m
     double x_unc = track->getXUnc();
@@ -255,20 +291,49 @@ void ProtonReconstructionAlgorithm::reconstructFromMultiRP(const vector<const CT
       throw cms::Exception("") << "Optics data not available for RP " << it->getRPId() << ".";
   }
 
-  // rough (initial) estimate of xi
-  double S_xi0 = 0., S_1 = 0.;
-  for (const auto &track : tracks)
-  {
-    auto oit = m_rp_optics_.find(track->getRPId());
-    double xi = oit->second.s_xi_vs_x->Eval(track->getX() * 1E-3);  // mm --> m
+  // initial estimate of xi and th_x
+  double xi_init = 0., th_x_init = 0.;
 
-    S_1 += 1.;
-    S_xi0 += xi;
+  const bool use_improved_estimate = true;
+
+  if (use_improved_estimate)
+  {
+    double x_N = 0., x_F = 0.;
+    const RPOpticsData *i_N = NULL, *i_F = NULL;
+    unsigned int idx = 0;
+    for (const auto &track : tracks)
+    {
+      auto oit = m_rp_optics_.find(track->getRPId());
+
+      if (idx == 0) { x_N = track->getX() * 1E-3; i_N = &oit->second; }
+      if (idx == 1) { x_F = track->getX() * 1E-3; i_F = &oit->second; }
+      if (idx == 2) break;
+
+      idx++;
+    }
+
+    const double a = i_F->ch1*i_N->la1 - i_N->ch1*i_F->la1;
+    const double b = i_F->ch0*i_N->la1 - i_N->ch0*i_F->la1 + i_F->ch1*i_N->la0 - i_N->ch1*i_F->la0 + x_N*i_F->la1 - x_F*i_N->la1;
+    const double c = x_N*i_F->la0 - x_F*i_N->la0 + i_F->ch0*i_N->la0 - i_N->ch0*i_F->la0;
+    const double D = b*b - 4.*a*c;
+
+    xi_init = (-b + sqrt(D)) / 2. / a;
+    th_x_init = (x_N - i_N->ch0 - i_N->ch1 * xi_init) / (i_N->la0 + i_N->la1 * xi_init);
+  } else {
+    double S_xi0 = 0., S_1 = 0.;
+    for (const auto &track : tracks)
+    {
+      auto oit = m_rp_optics_.find(track->getRPId());
+      double xi = oit->second.s_xi_vs_x->Eval(track->getX() * 1E-3);  // mm --> m
+
+      S_1 += 1.;
+      S_xi0 += xi;
+    }
+
+    xi_init = S_xi0 / S_1;
   }
 
-  const double xi_0 = S_xi0 / S_1;
-
-  // rough (initial) estimate of th_y and vtx_y
+  // initial estimate of th_y and vtx_y
   double y[2], v_y[2], L_y[2];
   unsigned int y_idx = 0;
   for (const auto &track : tracks)
@@ -278,29 +343,29 @@ void ProtonReconstructionAlgorithm::reconstructFromMultiRP(const vector<const CT
 
     auto oit = m_rp_optics_.find(track->getRPId());
 
-    y[y_idx] = track->getY()*1E-3 - oit->second.s_y0_vs_xi->Eval(xi_0); // track y: mm --> m
-    v_y[y_idx] = oit->second.s_v_y_vs_xi->Eval(xi_0);
-    L_y[y_idx] = oit->second.s_L_y_vs_xi->Eval(xi_0);
+    y[y_idx] = track->getY()*1E-3 - oit->second.s_y0_vs_xi->Eval(xi_init); // track y: mm --> m
+    v_y[y_idx] = oit->second.s_v_y_vs_xi->Eval(xi_init);
+    L_y[y_idx] = oit->second.s_L_y_vs_xi->Eval(xi_init);
 
     y_idx++;
   }
 
   const double det_y = v_y[0] * L_y[1] - L_y[0] * v_y[1];
-  const double vtx_y_0 = (L_y[1] * y[0] - L_y[0] * y[1]) / det_y;
-  const double th_y_0 = (v_y[0] * y[1] - v_y[1] * y[0]) / det_y;
+  const double vtx_y_init = (L_y[1] * y[0] - L_y[0] * y[1]) / det_y;
+  const double th_y_init = (v_y[0] * y[1] - v_y[1] * y[0]) / det_y;
 
   if (verbosity)
   {
     unsigned int armId = CTPPSDetId((*tracks.begin())->getRPId()).arm();
     printf("* ProtonReconstructionAlgorithm::reconstructFromMultiRP(%u)\n", armId);
-    printf("    initial estimate: xi_0 = %f, th_y_0 = %E, vtx_y_0 = %E\n", xi_0, th_y_0, vtx_y_0);
+    printf("    initial estimate: xi_init = %f, th_x_init = %E, th_y_init = %E, vtx_y_init = %E\n", xi_init, th_x_init, th_y_init, vtx_y_init);
   }
 
   // minimisation
-  fitter_->Config().ParSettings(0).Set("xi", xi_0, 0.005);
-  fitter_->Config().ParSettings(1).Set("th_x", 0., 20E-6);
-  fitter_->Config().ParSettings(2).Set("th_y", th_y_0, 1E-6);
-  fitter_->Config().ParSettings(3).Set("vtx_y", vtx_y_0, 1E-6);
+  fitter_->Config().ParSettings(0).Set("xi", xi_init, 0.005);
+  fitter_->Config().ParSettings(1).Set("th_x", th_x_init, 2E-6);
+  fitter_->Config().ParSettings(2).Set("th_y", th_y_init, 2E-6);
+  fitter_->Config().ParSettings(3).Set("vtx_y", vtx_y_init, 10E-6);
 
   chiSquareCalculator_->tracks = &tracks;
   chiSquareCalculator_->m_rp_optics = &m_rp_optics_;
