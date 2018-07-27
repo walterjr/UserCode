@@ -44,7 +44,7 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
 
     std::string outputFile;
 
-    unsigned int max_non_empty_events;
+    signed int maxNonEmptyEvents;
 
     static void ProfileToRMSGraph(TProfile *p, TGraphErrors *g)
     {
@@ -284,7 +284,7 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
 
     TH1D *h_de_x_f_n_L, *h_de_x_f_n_R;
 
-    unsigned int n_non_empty_events;
+    signed int n_non_empty_events;
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -297,7 +297,8 @@ using namespace edm;
 CTPPSProtonReconstructionPlotter::CTPPSProtonReconstructionPlotter(const edm::ParameterSet &ps) :
   tokenTracks(consumes< std::vector<CTPPSLocalTrackLite>>(ps.getParameter<edm::InputTag>("tagTracks"))),
   tokenRecoProtons(consumes<std::vector<reco::ProtonTrack>>(ps.getParameter<InputTag>("tagRecoProtons"))),
-  outputFile(ps.getParameter<string>("outputFile"))
+  outputFile(ps.getParameter<string>("outputFile")),
+  maxNonEmptyEvents(ps.getUntrackedParameter<signed int>("maxNonEmptyEvents", -1))
 {
   h_de_x_f_n_L = new TH1D("h_de_x_f_n_L", ";x_{LF} - x_{LN}   (mm)", 100, -3., +3.);
   h_de_x_f_n_R = new TH1D("h_de_x_f_n_R", ";x_{RF} - x_{RN}   (mm)", 100, -3., +3.);
@@ -318,6 +319,9 @@ void CTPPSProtonReconstructionPlotter::analyze(const edm::Event &event, const ed
 
   if (recoProtons->size() > 0)
     n_non_empty_events++;
+
+  if (maxNonEmptyEvents > 0 && n_non_empty_events > maxNonEmptyEvents)
+    throw cms::Exception("CTPPSProtonReconstructionPlotter") << "Number of non empty events reached maximum.";
 
   // track plots
 /*
