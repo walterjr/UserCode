@@ -2,16 +2,27 @@
 
 function RunOne()
 {
-	local cfgFile="${1}_cfg.py"
-	local logFile="${1}.log"
+	local thSize="$1"
+	local level="$2"
 
-	cat "$cfgFile" | sed "\
-			s|\$events|$events|;\
-		" > "$dir/$cfgFile"
+	local tag="th_${thSize}_level_${level}"
+
+	local cfgFile="${tag}_cfg.py"
+	local logFile="${tag}.log"
+
+	cp "base_cff.py" "$dir/$cfgFile"
+
+	(
+		echo "process.maxEvents.input = $events"
+		echo "Set${thSize}Theta()"
+		echo "SetLevel${level}()"
+		echo "process.ctppsProtonReconstructionPlotter.outputFile = \"${tag}_plots.root\""
+		echo "process.ctppsProtonReconstructionValidator.outputFile = \"${tag}_validation.root\""
+	) >> "$dir/$cfgFile"
 
 	cd "$dir"
 
-	#cmsRun "$cfgFile" &> "$logFile" &
+	cmsRun "$cfgFile" &> "$logFile" &
 
 	cd - &> /dev/null
 }
@@ -27,19 +38,18 @@ function Run()
 	rm -rf "$dir"
 	mkdir "$dir"
 
-	cp "base_cff.py" "$dir"
+	#RunOne "Low" "1"
+	#RunOne "Low" "2"
+	#RunOne "Low" "3"
+	#RunOne "Low" "4"
 
-	#RunOne test_low_th_level1
-	#RunOne test_low_th_level2
-	#RunOne test_low_th_level3
-	#RunOne test_low_th_level4
-	
-	RunOne test_large_th_level1
-	RunOne test_large_th_level2
-	RunOne test_large_th_level3
-	RunOne test_large_th_level4
+	RunOne "Large" "1"
+	RunOne "Large" "2"
+	RunOne "Large" "3"
+	RunOne "Large" "4"
 }
 
 #----------------------------------------------------------------------------------------------------
 
-Run "100" "1E2"
+#Run "100" "1E2"
+Run "10000" "1E4"
