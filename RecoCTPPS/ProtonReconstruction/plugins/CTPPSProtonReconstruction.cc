@@ -49,6 +49,9 @@ class CTPPSProtonReconstruction : public edm::stream::EDProducer<>
     bool applyExperimentalAlignment;
     edm::FileInPath alignmentFile_;
 
+    bool applyTestAlignment;
+    double de_x_N, de_x_F, de_y_N, de_y_F;
+
     AlignmentResultsCollection alignmentCollection_;
 
     ProtonReconstructionAlgorithm algorithm_;
@@ -73,6 +76,12 @@ CTPPSProtonReconstruction::CTPPSProtonReconstruction( const edm::ParameterSet& i
 
   applyExperimentalAlignment  ( iConfig.getParameter<bool>( "applyExperimentalAlignment" ) ),
   alignmentFile_              ( iConfig.getParameter<edm::FileInPath>( "alignmentFile" ) ),
+
+  applyTestAlignment  ( iConfig.getParameter<bool>( "applyTestAlignment" ) ),
+  de_x_N(iConfig.getParameter<double>("de_x_N")),
+  de_x_F(iConfig.getParameter<double>("de_x_F")),
+  de_y_N(iConfig.getParameter<double>("de_y_N")),
+  de_y_F(iConfig.getParameter<double>("de_y_F")),
 
   algorithm_(opticsFileBeam1_.fullPath(), opticsFileBeam2_.fullPath(), beamConditions_, verbosity)
 {
@@ -135,6 +144,21 @@ void CTPPSProtonReconstruction::produce(Event& event, const EventSetup&)
     }
 
     tracksAligned = alignment_it->second.Apply(*tracks);
+  }
+
+  if (applyTestAlignment)
+  {
+    tracksAligned.clear();
+    for (const auto &t : *tracks)
+    {
+      CTPPSDetId rpId(t.getRPId());
+
+      double de_x = 0., de_y = 0.;
+      if (rpId.rp() == 2) { de_x = de_x_N; de_y = de_y_N; }
+      if (rpId.rp() == 3) { de_x = de_x_F; de_y = de_y_F; }
+
+      tracksAligned.emplace_back(t.getRPId(), t.getX() + de_x, t.getXUnc(), t.getY() + de_y, t.getYUnc());
+    }
   }
 
   if (verbosity)
