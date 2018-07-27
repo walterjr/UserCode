@@ -16,10 +16,8 @@ process.MessageLogger = cms.Service("MessageLogger",
 process.source = cms.Source("EmptySource")
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(10000)
+    input = cms.untracked.int32(10)
 )
-
-outputDir = "1E4"
 
 # particle-data table
 process.load("SimGeneral.HepPDTESSource.pythiapdt_cfi")
@@ -101,56 +99,56 @@ process.load('RecoCTPPS.TotemRPLocal.ctppsLocalTrackLiteProducer_cfi')
 process.load("RecoCTPPS.ProtonReconstruction.ctppsProtonReconstruction_cfi")
 process.ctppsProtonReconstruction.tagLocalTrackLite = cms.InputTag('ctppsLocalTrackLiteProducer')
 
-# reconstruction validation
-process.load("Validation.CTPPS.ctppsProtonReconstructionValidator_cfi")
-process.ctppsProtonReconstructionValidator.tagHepMCBeforeSmearing = cms.InputTag("generator", "unsmeared")
-process.ctppsProtonReconstructionValidator.tagHepMCAfterSmearing = cms.InputTag("beamDivergenceVtxGenerator")
-process.ctppsProtonReconstructionValidator.tagRecoProtons = cms.InputTag("ctppsProtonReconstruction")
-
-# processing path
-process.p = cms.Path(
-    process.generator
-    * process.beamDivergenceVtxGenerator
-    * process.ctppsFastProtonSimulation
-
-    * process.totemRPUVPatternFinder
-    * process.totemRPLocalTrackFitter
-    * process.ctppsLocalTrackLiteProducer
-    * process.ctppsProtonReconstruction
-
-    * process.ctppsProtonReconstructionValidator
-)
-
-# customisation functions
-
-def SetLevel1():
-  process.beamDivergenceVtxGenerator.vertexSigmaX = 0E-4
-  process.beamDivergenceVtxGenerator.vertexSigmaZ = 0
-
-  process.beamDivergenceVtxGenerator.beamDivergenceX = 0E-6
-  process.beamDivergenceVtxGenerator.beamDivergenceY = 0E-6
-
-  process.ctppsFastProtonSimulation.roundToPitch = False
-
-
-def SetLevel2():
-  process.beamDivergenceVtxGenerator.beamDivergenceX = 0E-6
-  process.beamDivergenceVtxGenerator.beamDivergenceY = 0E-6
-
-  process.ctppsFastProtonSimulation.roundToPitch = False
-
-
-def SetLevel3():
-  process.ctppsFastProtonSimulation.roundToPitch = False
-
-
-def SetLevel4():
-  pass
-
-def SetLowTheta():
-  process.generator.theta_x_sigma = 0E-6
-  process.generator.theta_y_sigma = 0E-6
-
-
-def SetLargeTheta():
-  pass
+###   # reconstruction validation
+###   process.load("Validation.CTPPS.ctppsProtonReconstructionValidator_cfi")
+###   process.ctppsProtonReconstructionValidator.tagHepMCBeforeSmearing = cms.InputTag("generator", "unsmeared")
+###   process.ctppsProtonReconstructionValidator.tagHepMCAfterSmearing = cms.InputTag("beamDivergenceVtxGenerator")
+###   process.ctppsProtonReconstructionValidator.tagRecoProtons = cms.InputTag("ctppsProtonReconstruction")
+###   
+###   # processing path
+###   process.p = cms.Path(
+###       process.generator
+###       * process.beamDivergenceVtxGenerator
+###       * process.ctppsFastProtonSimulation
+###   
+###       * process.totemRPUVPatternFinder
+###       * process.totemRPLocalTrackFitter
+###       * process.ctppsLocalTrackLiteProducer
+###       * process.ctppsProtonReconstruction
+###   
+###       * process.ctppsProtonReconstructionValidator
+###   )
+###   
+###   # customisation functions
+###   
+###   def SetLevel1():
+###     process.beamDivergenceVtxGenerator.vertexSigmaX = 0E-4
+###     process.beamDivergenceVtxGenerator.vertexSigmaZ = 0
+###   
+###     process.beamDivergenceVtxGenerator.beamDivergenceX = 0E-6
+###     process.beamDivergenceVtxGenerator.beamDivergenceY = 0E-6
+###   
+###     process.ctppsFastProtonSimulation.roundToPitch = False
+###   
+###   
+###   def SetLevel2():
+###     process.beamDivergenceVtxGenerator.beamDivergenceX = 0E-6
+###     process.beamDivergenceVtxGenerator.beamDivergenceY = 0E-6
+###   
+###     process.ctppsFastProtonSimulation.roundToPitch = False
+###   
+###   
+###   def SetLevel3():
+###     process.ctppsFastProtonSimulation.roundToPitch = False
+###   
+###   
+###   def SetLevel4():
+###     pass
+###   
+###   def SetLowTheta():
+###     process.generator.theta_x_sigma = 0E-6
+###     process.generator.theta_y_sigma = 0E-6
+###   
+###   
+###   def SetLargeTheta():
+###     pass
