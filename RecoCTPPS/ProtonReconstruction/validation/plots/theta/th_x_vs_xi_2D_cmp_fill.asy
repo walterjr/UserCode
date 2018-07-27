@@ -40,7 +40,7 @@ for (int fi : fill_data.keys)
 			string f = topDir + dataset + "/" + stream + "/alignment_" + alignment + "/output.root";
 			string on = "multiRPPlots/" + cols[ci] + "/h2_th_x_vs_xi";
 			RootObject hist = RootGetObject(f, on);
-			hist.vExec("Rebin2D", 2, 2);
+			//hist.vExec("Rebin2D", 2, 2);
 
 			string f = topDir + dataset + "/" + stream + "/alignment_" + alignment + "/do_fits.root";
 			string on = "multiRPPlots/" + cols[ci] + "/p_th_x_vs_xi|ff_pol1";

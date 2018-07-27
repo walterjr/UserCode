@@ -9,8 +9,7 @@ string stream = "DoubleEG";
 
 string alignments[], a_labels[];
 alignments.push("2017_01_17"); a_labels.push("2017-01-17");
-//alignments.push("2018_07_17"); a_labels.push("2018-07-17");
-alignments.push("2018_07_24.3"); a_labels.push("2018-07-24.3");
+alignments.push("2018_07_27.1"); a_labels.push("2018-07-27.1");
 
 string cols[], c_labels[];
 cols.push("arm0"); c_labels.push("sector 45 (L)");
@@ -50,21 +49,21 @@ for (int ai : alignments.keys)
 
 	for (int ci : cols.keys)
 	{
-		NewPad("fill", "mean of $\th^*_{x}\ung{\mu rad}$");
+		NewPad("fill", "mean of $y^*\ung{\mu m}$");
 
 		for (int fi : fill_data.keys)
 		{
 			for (int dsi : fill_data[fi].datasets.keys)
 			{
 				string f = topDir + fill_data[fi].datasets[dsi].tag + "/" + stream + "/alignment_" + alignments[ai] + "/do_fits.root";
-				string on = "multiRPPlots/" + cols[ci] + "/p_th_x_vs_xi|ff";
+				string on = "multiRPPlots/" + cols[ci] + "/p_vtx_y_vs_xi|ff";
 	
 				RootObject obj = RootGetObject(f, on, error=false);
 				if (!obj.valid)
 					continue;
 	
-				real d = obj.rExec("GetParameter", 0) * 1e6;
-				real d_unc = obj.rExec("GetParError", 0) * 1e6;
+				real d = obj.rExec("GetParameter", 0) * 1e3;
+				real d_unc = obj.rExec("GetParError", 0) * 1e3;
 
 				mark m = GetDatasetMark(fill_data[fi].datasets[dsi]);
 				pen p = GetDatasetPen(fill_data[fi].datasets[dsi]);

@@ -9,8 +9,8 @@ string stream = "DoubleEG";
 
 string alignments[], a_labels[];
 alignments.push("2017_01_17"); a_labels.push("2017-01-17");
-//alignments.push("2018_07_17"); a_labels.push("2018-07-17");
-alignments.push("2018_07_24.3"); a_labels.push("2018-07-24.3");
+alignments.push("2018_07_26.1"); a_labels.push("2018-07-26.1");
+alignments.push("2018_07_27.1"); a_labels.push("2018-07-27.1");
 
 string cols[], c_labels[];
 cols.push("arm0"); c_labels.push("sector 45 (L)");
@@ -36,9 +36,9 @@ string TickLabels(real x)
 
 xTicksDef = LeftTicks(rotate(90)*Label(""), TickLabels, Step=1, step=0);
 
-xSizeDef = 15cm;
+xSizeDef = 17cm;
 
-yTicksDef = RightTicks(50., 10.);
+yTicksDef = RightTicks(10., 5.);
 
 //----------------------------------------------------------------------------------------------------
 
@@ -55,7 +55,7 @@ for (int ai : alignments.keys)
 
 	for (int ci : cols.keys)
 	{
-		NewPad("fill", "mean of $\th^*_{x}\ung{\mu rad}$");
+		NewPad("fill", "mean of $\th^*_{x,y}\ung{\mu rad}$");
 
 		for (int pri : projections.keys)
 		{
@@ -83,7 +83,7 @@ for (int ai : alignments.keys)
 			}
 		}
 
-		limits((-1, -100.), (fill_data.length, +100), Crop);
+		limits((-1, -50.), (fill_data.length, +50), Crop);
 	}
 }
 
