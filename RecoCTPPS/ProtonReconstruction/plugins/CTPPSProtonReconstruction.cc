@@ -112,16 +112,6 @@ void CTPPSProtonReconstruction::produce(Event& event, const EventSetup&)
   // prepare output
   unique_ptr<vector<reco::ProtonTrack>> output( new vector<reco::ProtonTrack> );
 
-  if (verbosity)
-  {
-    for (const auto &tr : *tracks)
-    {
-      CTPPSDetId rpId(tr.getRPId());
-      unsigned int decRPId = rpId.arm()*100 + rpId.station()*10 + rpId.rp();
-      printf("%u (%u): x=%.3f, y=%.3f mm\n", tr.getRPId(), decRPId, tr.getX(), tr.getY());
-    }
-  }
-
   // get and apply alignment
   auto tracksAligned = *tracks;
 
@@ -145,6 +135,17 @@ void CTPPSProtonReconstruction::produce(Event& event, const EventSetup&)
     }
 
     tracksAligned = alignment_it->second.Apply(*tracks);
+  }
+
+  if (verbosity)
+  {
+    printf("\n---------- %u:%llu ----------\n", event.id().run(), event.id().event());
+    for (const auto &tr : tracksAligned)
+    {
+      CTPPSDetId rpId(tr.getRPId());
+      unsigned int decRPId = rpId.arm()*100 + rpId.station()*10 + rpId.rp();
+      printf("%u (%u): x=%.3f, y=%.3f mm\n", tr.getRPId(), decRPId, tr.getX(), tr.getY());
+    }
   }
 
   // split input per sector

@@ -434,7 +434,7 @@ void ProtonReconstructionAlgorithm::reconstructFromSingleRP(const vector<const C
       throw cms::Exception("") << "Optics data not available for RP " << it->getRPId() << ".";
   }
 
-  // rough estimate of xi from each track
+  // rough estimate of xi and th_y from each track
   for (const auto &track : tracks)
   {
     CTPPSDetId rpId(track->getRPId());
@@ -444,21 +444,29 @@ void ProtonReconstructionAlgorithm::reconstructFromSingleRP(const vector<const C
       printf("* reconstructFromSingleRP(%u)\n", decRPId);
 
     auto oit = m_rp_optics_.find(track->getRPId());
-    double xi = oit->second.s_xi_vs_x->Eval(track->getX() * 1E-3); // mm --> m
+    const double xi = oit->second.s_xi_vs_x->Eval(track->getX() * 1E-3); // mm --> m
+    const double L_y = oit->second.s_L_y_vs_xi->Eval(xi);
+    const double th_y = track->getY() * 1E-3 / L_y;
 
     if (verbosity)
-      printf("    x = %f mm, xi = %f\n", track->getX(), xi);
+      printf("    xi = %f, th_y = %E\n", xi, th_y);
 
     reco::ProtonTrack pt;
     pt.method = reco::ProtonTrack::rmSingleRP;
+    pt.lhcSector = (CTPPSDetId(track->getRPId()).arm() == 0) ? reco::ProtonTrack::sector45 : reco::ProtonTrack::sector56;
+    pt.contributingRPIds.insert(track->getRPId());
+
+    const double p_nom = 6500.;  // GeV
+    const double p = p_nom *  (1. - xi);
+
+    const double sign_z_lhc = (pt.lhcSector == reco::ProtonTrack::sector45) ? -1. : +1.;
+
     pt.setValid(true);
     pt.setVertex(Local3DPoint(0., 0., 0.));
-    pt.setDirection(Local3DVector(0., 0., 1.));
+    pt.setDirection(Local3DVector(0., + p * th_y, - sign_z_lhc * p));
     pt.setXi(xi);
     pt.fitNDF = 0;
     pt.fitChiSq = 0.;
-    pt.lhcSector = (CTPPSDetId(track->getRPId()).arm() == 0) ? reco::ProtonTrack::sector45 : reco::ProtonTrack::sector56;
-    pt.contributingRPIds.insert(track->getRPId());
 
     out.push_back(move(pt));
   }
