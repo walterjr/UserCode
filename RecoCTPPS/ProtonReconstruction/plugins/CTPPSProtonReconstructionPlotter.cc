@@ -67,6 +67,17 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
         }
     }
 
+    static double CalculateT(double xi, double th_x, double th_y)
+    {
+      const double m = 0.938; // GeV
+      const double p = 6500.; // GeV
+
+	  const double t0 = 2.*m*m + 2.*p*p*(1.-xi) - 2.*sqrt( (m*m + p*p) * (m*m + p*p*(1.-xi)*(1.-xi)) );
+      const double th = sqrt(th_x * th_x + th_y * th_y);
+	  const double S = sin(th/2.);
+	  return t0 - 4. * p*p * (1.-xi) * S*S;
+    }
+
     struct SingleRPPlots
     {
       TH1D *h_xi = NULL;
@@ -110,12 +121,16 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
 
     struct MultiRPPlots
     {
-      TH1D *h_xi=NULL, *h_th_x=NULL, *h_th_y=NULL, *h_vtx_y=NULL, *h_chi_sq=NULL, *h_chi_sq_norm=NULL;
-      TH2D *h2_th_x_vs_xi = NULL, *h2_th_y_vs_xi = NULL, *h2_vtx_y_vs_xi = NULL;
+      TH1D *h_xi=NULL, *h_th_x=NULL, *h_th_y=NULL, *h_vtx_y=NULL, *h_t=NULL, *h_chi_sq=NULL, *h_chi_sq_norm=NULL;
+      TH1D *h_t_xi_range1=NULL, *h_t_xi_range2=NULL, *h_t_xi_range3=NULL;
+      TH2D *h2_th_x_vs_xi = NULL, *h2_th_y_vs_xi = NULL, *h2_vtx_y_vs_xi = NULL, *h2_t_vs_xi;
       TProfile *p_th_x_vs_xi = NULL, *p_th_y_vs_xi = NULL, *p_vtx_y_vs_xi = NULL;
 
       void Init()
       {
+        h_chi_sq = new TH1D("", ";#chi^{2}", 100, 0., 0.);
+        h_chi_sq_norm = new TH1D("", ";#chi^{2}/ndf", 100, 0., 5.);
+
         h_xi = new TH1D("", ";#xi", 100, 0., 0.2);
 
         h_th_x = new TH1D("", ";#theta_{x}   (rad)", 100, -500E-6, +500E-6);
@@ -123,12 +138,15 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
 
         h_vtx_y = new TH1D("", ";vtx_{y}   (mm)", 100, -2., +2.);
 
-        h_chi_sq = new TH1D("", ";#chi^{2}", 100, 0., 0.);
-        h_chi_sq_norm = new TH1D("", ";#chi^{2}/ndf", 100, 0., 5.);
+        h_t = new TH1D("", ";|t|   (GeV^2)", 100, 0., 5.);
+        h_t_xi_range1 = new TH1D("", ";|t|   (GeV^2)", 100, 0., 5.);
+        h_t_xi_range2 = new TH1D("", ";|t|   (GeV^2)", 100, 0., 5.);
+        h_t_xi_range3 = new TH1D("", ";|t|   (GeV^2)", 100, 0., 5.);
 
         h2_th_x_vs_xi = new TH2D("", ";#xi;#theta_{x}   (rad)", 100, 0., 0.2, 100, -500E-6, +500E-6);
         h2_th_y_vs_xi = new TH2D("", ";#xi;#theta_{y}   (rad)", 100, 0., 0.2, 100, -500E-6, +500E-6);
         h2_vtx_y_vs_xi = new TH2D("", ";#xi;vtx_{y}   (mm)", 100, 0., 0.2, 100, -500E-3, +500E-3);
+        h2_t_vs_xi = new TH2D("", ";#xi;|t|   (GeV^2)", 100, 0., 0.2, 100, 0., 5.);
 
         p_th_x_vs_xi = new TProfile("", ";#xi;#theta_{x}   (rad)", 100, 0., 0.2);
         p_th_y_vs_xi = new TProfile("", ";#xi;#theta_{y}   (rad)", 100, 0., 0.2);
@@ -144,6 +162,11 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
         {
           const double th_x = p.direction().x() / p.direction().mag();
           const double th_y = p.direction().y() / p.direction().mag();
+          const double mt = - CalculateT(p.xi(), th_x, th_y);
+
+          h_chi_sq->Fill(p.fitChiSq);
+          if (p.fitNDF > 0)
+            h_chi_sq_norm->Fill(p.fitChiSq / p.fitNDF);
 
           h_xi->Fill(p.xi());
 
@@ -152,14 +175,15 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
 
           h_vtx_y->Fill(p.vertex().y());
 
-          h_chi_sq->Fill(p.fitChiSq);
-
-          if (p.fitNDF > 0)
-            h_chi_sq_norm->Fill(p.fitChiSq / p.fitNDF);
+          h_t->Fill(mt);
+          if (p.xi() > 0.04 && p.xi() < 0.07) h_t_xi_range1->Fill(mt);
+          if (p.xi() > 0.07 && p.xi() < 0.10) h_t_xi_range2->Fill(mt);
+          if (p.xi() > 0.10 && p.xi() < 0.13) h_t_xi_range3->Fill(mt);
 
           h2_th_x_vs_xi->Fill(p.xi(), th_x);
           h2_th_y_vs_xi->Fill(p.xi(), th_y);
           h2_vtx_y_vs_xi->Fill(p.xi(), p.vertex().y());
+          h2_t_vs_xi->Fill(p.xi(), mt);
 
           p_th_x_vs_xi->Fill(p.xi(), th_x);
           p_th_y_vs_xi->Fill(p.xi(), th_y);
@@ -194,6 +218,13 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
         TGraphErrors *g_vtx_y_RMS_vs_xi = new TGraphErrors();
         ProfileToRMSGraph(p_vtx_y_vs_xi, g_vtx_y_RMS_vs_xi);
         g_vtx_y_RMS_vs_xi->Write("g_vtx_y_RMS_vs_xi");
+
+        h_t->Write("h_t");
+        h_t_xi_range1->Write("h_t_xi_range1");
+        h_t_xi_range2->Write("h_t_xi_range2");
+        h_t_xi_range3->Write("h_t_xi_range3");
+
+        h2_t_vs_xi->Write("h2_t_vs_xi");
       }
     };
 
@@ -282,7 +313,8 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
 
     std::map<unsigned int, ArmCorrelationPlots> armCorrelationPlots;
 
-    TH1D *h_de_x_f_n_L, *h_de_x_f_n_R;
+    TProfile *p_x_L_diffNF_vs_x_L_N, *p_x_R_diffNF_vs_x_R_N;
+    TProfile *p_y_L_diffNF_vs_y_L_N, *p_y_R_diffNF_vs_y_R_N;
 
     signed int n_non_empty_events;
 };
@@ -300,8 +332,11 @@ CTPPSProtonReconstructionPlotter::CTPPSProtonReconstructionPlotter(const edm::Pa
   outputFile(ps.getParameter<string>("outputFile")),
   maxNonEmptyEvents(ps.getUntrackedParameter<signed int>("maxNonEmptyEvents", -1))
 {
-  h_de_x_f_n_L = new TH1D("h_de_x_f_n_L", ";x_{LF} - x_{LN}   (mm)", 100, -3., +3.);
-  h_de_x_f_n_R = new TH1D("h_de_x_f_n_R", ";x_{RF} - x_{RN}   (mm)", 100, -3., +3.);
+  p_x_L_diffNF_vs_x_L_N = new TProfile("p_x_L_diffNF_vs_x_L_N", ";x_{LN};x_{LF} - x_{LN}", 100, 0., +20.);
+  p_x_R_diffNF_vs_x_R_N = new TProfile("p_x_R_diffNF_vs_x_R_N", ";x_{RN};x_{RF} - x_{RN}", 100, 0., +20.);
+
+  p_y_L_diffNF_vs_y_L_N = new TProfile("p_y_L_diffNF_vs_y_L_N", ";y_{LN};y_{LF} - y_{LN}", 100, -20., +20.);
+  p_y_R_diffNF_vs_y_R_N = new TProfile("p_y_R_diffNF_vs_y_R_N", ";y_{RN};y_{RF} - y_{RN}", 100, -20., +20.);
 
   n_non_empty_events = 0;
 }
@@ -324,7 +359,6 @@ void CTPPSProtonReconstructionPlotter::analyze(const edm::Event &event, const ed
     throw cms::Exception("CTPPSProtonReconstructionPlotter") << "Number of non empty events reached maximum.";
 
   // track plots
-/*
   const CTPPSLocalTrackLite *tr_L_N = NULL;
   const CTPPSLocalTrackLite *tr_L_F = NULL;
   const CTPPSLocalTrackLite *tr_R_N = NULL;
@@ -340,30 +374,18 @@ void CTPPSProtonReconstructionPlotter::analyze(const edm::Event &event, const ed
     if (decRPId == 102) tr_R_N = &tr;
     if (decRPId == 103) tr_R_F = &tr;
   }
-*/
 
-  bool x_correlation_L = true;
-  bool x_correlation_R = true;
-
-/*
   if (tr_L_N && tr_L_F)
   {
-    const double de = tr_L_F->getX() - tr_L_N->getX();
-    h_de_x_f_n_L->Fill(de);
-
-    if (fabs(de - 1.18) < 2. * 0.22)
-      x_correlation_L = true;
+    p_x_L_diffNF_vs_x_L_N->Fill(tr_L_N->getX(), tr_L_F->getX() - tr_L_N->getX());
+    p_y_L_diffNF_vs_y_L_N->Fill(tr_L_N->getY(), tr_L_F->getY() - tr_L_N->getY());
   }
 
   if (tr_R_N && tr_R_F)
   {
-    const double de = tr_R_F->getX() - tr_R_N->getX();
-    h_de_x_f_n_R->Fill(de);
-
-    if (fabs(de + 0.81) < 2. * 0.24)
-      x_correlation_R = true;
+    p_x_R_diffNF_vs_x_R_N->Fill(tr_R_N->getX(), tr_R_F->getX() - tr_R_N->getX());
+    p_y_R_diffNF_vs_y_R_N->Fill(tr_R_N->getY(), tr_R_F->getY() - tr_R_N->getY());
   }
-*/
 
   // make single-RP-reco plots
   for (const auto & proton : *recoProtons)
@@ -379,11 +401,6 @@ void CTPPSProtonReconstructionPlotter::analyze(const edm::Event &event, const ed
   // make multi-RP-reco plots
   for (const auto & proton : *recoProtons)
   {
-    bool x_correlation = (proton.lhcSector == reco::ProtonTrack::sector45) ? x_correlation_L : x_correlation_R;
-
-    if (!x_correlation)
-      continue;
-
     if (proton.method == reco::ProtonTrack::rmMultiRP)
     {
       CTPPSDetId rpId(* proton.contributingRPIds.begin());
@@ -452,8 +469,11 @@ void CTPPSProtonReconstructionPlotter::endJob()
 
   TFile *f_out = TFile::Open(outputFile.c_str(), "recreate");
 
-  h_de_x_f_n_L->Write();
-  h_de_x_f_n_R->Write();
+  p_x_L_diffNF_vs_x_L_N->Write();
+  p_x_R_diffNF_vs_x_R_N->Write();
+
+  p_y_L_diffNF_vs_y_L_N->Write();
+  p_y_R_diffNF_vs_y_R_N->Write();
 
   TDirectory *d_singleRPPlots = f_out->mkdir("singleRPPlots");
   for (const auto it : singleRPPlots)
