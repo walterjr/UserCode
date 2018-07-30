@@ -81,6 +81,8 @@ int main(int argc, char **argv)
     TProfile *p_x = (TProfile *) Load(f_in, "multiRPPlots/" + rec.dir + "/p_th_x_vs_xi", process);
     TProfile *p_y = (TProfile *) Load(f_in, "multiRPPlots/" + rec.dir + "/p_th_y_vs_xi", process);
 
+    TProfile *p_vtx_y_vs_xi = (TProfile *) Load(f_in, "multiRPPlots/" + rec.dir + "/p_vtx_y_vs_xi", process);
+
     if (process)
     {
       ff->SetParameter(0, 0.);
@@ -99,9 +101,13 @@ int main(int argc, char **argv)
       ff_pol1->SetParameters(0., 0.);
       p_y->Fit(ff_pol1, "Q+", "", x_min, x_max);
 
+      ff->SetParameter(0, 0.);
+      p_vtx_y_vs_xi->Fit(ff, "Q", "", rec.min, rec.max);
+
       gDirectory = mu_dir->mkdir(rec.dir.c_str());
       p_x->Write("p_th_x_vs_xi");
       p_y->Write("p_th_y_vs_xi");
+      p_vtx_y_vs_xi->Write("p_vtx_y_vs_xi");
     }
 
     //----------
