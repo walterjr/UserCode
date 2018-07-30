@@ -52,6 +52,17 @@ class CTPPSProtonReconstructionValidator : public edm::one::EDAnalyzer<>
 
     std::string outputFile;
 
+    static double CalculateT(double xi, double th_x, double th_y)
+    {
+      const double m = 0.938; // GeV
+      const double p = 6500.; // GeV
+
+	  const double t0 = 2.*m*m + 2.*p*p*(1.-xi) - 2.*sqrt( (m*m + p*p) * (m*m + p*p*(1.-xi)*(1.-xi)) );
+      const double th = sqrt(th_x * th_x + th_y * th_y);
+	  const double S = sin(th/2.);
+	  return t0 - 4. * p*p * (1.-xi) * S*S;
+    }
+
     struct PlotGroup
     {
       TH1D *h_de_xi = NULL;
@@ -67,6 +78,10 @@ class CTPPSProtonReconstructionValidator : public edm::one::EDAnalyzer<>
       TH1D *h_de_vtx_y = NULL;
       TProfile *p_de_vtx_y_vs_xi_simu;
 
+      TH1D *h_de_t = NULL;
+      TProfile *p_de_t_vs_xi_simu;
+      TProfile *p_de_t_vs_t_simu;
+
       void Init()
       {
         h_de_xi = new TH1D("", ";#xi_{reco} - #xi_{simu}", 100, 0., 0.);
@@ -81,6 +96,10 @@ class CTPPSProtonReconstructionValidator : public edm::one::EDAnalyzer<>
 
         h_de_vtx_y = new TH1D("", ";vtx_{y,reco} - vtx_{y,simu}   (mm)", 100, 0., 0.);
         p_de_vtx_y_vs_xi_simu = new TProfile("", ";#xi_{simu};vtx_{y,reco} - vtx_{y,simu} (mm)", 19, 0.015, 0.205);
+
+        h_de_t = new TH1D("", ";t_{reco} - t_{simu}", 100, -1., +1.);
+        p_de_t_vs_xi_simu = new TProfile("", ";xi_{simu};t_{reco} - t_{simu}", 19, 0.015, 0.205);
+        p_de_t_vs_t_simu = new TProfile("", ";t_{simu};t_{reco} - t_{simu}", 20, 0., 5.);
       }
 
       static TGraphErrors* ProfileToRMSGraph(TProfile *p, const std::string &name = "")
@@ -128,6 +147,12 @@ class CTPPSProtonReconstructionValidator : public edm::one::EDAnalyzer<>
         h_de_vtx_y->Write("h_de_vtx_y");
         p_de_vtx_y_vs_xi_simu->Write("p_de_vtx_y_vs_xi_simu");
         ProfileToRMSGraph(p_de_vtx_y_vs_xi_simu, "g_rms_de_vtx_y_vs_xi_simu")->Write();
+
+        h_de_t->Write("h_de_t");
+        p_de_t_vs_xi_simu->Write("p_de_t_vs_xi_simu");
+        ProfileToRMSGraph(p_de_t_vs_xi_simu, "g_rms_de_t_vs_xi_simu")->Write();
+        p_de_t_vs_t_simu->Write("p_de_t_vs_t_simu");
+        ProfileToRMSGraph(p_de_t_vs_t_simu, "g_rms_de_t_vs_t_simu")->Write();
       }
     };
 
@@ -294,11 +319,13 @@ void CTPPSProtonReconstructionValidator::FillPlots(unsigned int meth_idx, unsign
   const double th_x_simu = mom.x() / mom.rho();
   const double th_y_simu = mom.y() / mom.rho();
   const double vtx_y_simu = vtx.y();  // mm
+  const double t_simu = - CalculateT(xi_simu, th_x_simu, th_y_simu);
 
   const double xi_reco = rec_pr.xi();
   const double th_x_reco = rec_pr.direction().x() / rec_pr.direction().mag();
   const double th_y_reco = rec_pr.direction().y() / rec_pr.direction().mag();
   const double vtx_y_reco = rec_pr.vertex().y();  // mm
+  const double t_reco = - CalculateT(xi_reco, th_x_reco, th_y_reco);
 
   /*
   printf("- SIMU: xi=%.4f, th_x=%.3E, th_y=%.3E, vtx_y=%.3E; RECO: xi=%.4f, th_x=%.3E, th_y=%.3E, vtx_y=%.3E\n",
@@ -333,6 +360,10 @@ void CTPPSProtonReconstructionValidator::FillPlots(unsigned int meth_idx, unsign
 
   p.h_de_vtx_y->Fill(vtx_y_reco - vtx_y_simu);
   p.p_de_vtx_y_vs_xi_simu->Fill(xi_simu, vtx_y_reco - vtx_y_simu);
+
+  p.h_de_t->Fill(t_reco - t_simu);
+  p.p_de_t_vs_xi_simu->Fill(xi_simu, t_reco - t_simu);
+  p.p_de_t_vs_t_simu->Fill(t_simu, t_reco - t_simu);
 }
 
 //----------------------------------------------------------------------------------------------------
