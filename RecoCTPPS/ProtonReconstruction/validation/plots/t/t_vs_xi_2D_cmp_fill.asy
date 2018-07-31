@@ -40,15 +40,18 @@ for (int fi : fill_data.keys)
 	
 		for (int ci : cols.keys)
 		{
-			NewPad("$\xi$", "$|t|\ung{GeV^2}$");
+			NewPad("$\xi$", "$|t|\ung{GeV^2}$", axesAbove = true);
+			scale(Linear, Linear, Log);
 
 			string f = topDir + dataset + "/" + stream + "/alignment_" + alignment + "/output.root";
 			string on = "multiRPPlots/" + cols[ci] + "/h2_t_vs_xi";
 			RootObject hist = RootGetObject(f, on);
 
+			hist.vExec("Rebin2D", 2, 1);
+
 			draw(hist);
 
-			limits((0, 0), (0.20, 3), Crop);
+			limits((3, 0), (0.20, 4), Crop);
 		}
 	}
 }

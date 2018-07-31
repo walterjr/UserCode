@@ -29,6 +29,14 @@ TH2_palette = Gradient(blue, heavygreen, yellow, red);
 
 //----------------------------------------------------------------------------------------------------
 
+real ExpDist(real mt)
+{
+	real B = 3.0;
+	return B * exp(-B * mt);
+}
+
+//----------------------------------------------------------------------------------------------------
+
 NewPad(false);
 label("\vbox{\hbox{stream: " + stream + "}\hbox{alignment: " + replace(alignment, "_", "\_") + "}}");
 
@@ -59,10 +67,12 @@ for (int ri : rows.keys)
 				pen p = StdPen(fi);
 
 				draw(hist, "N,eb", p);
-
-				limits((0, 1e-2), (4, 5), Crop);
 			}
 		}
+
+		//draw(graph(ExpDist, 0., 4.), black+dashed);
+
+		limits((0, 1e-2), (4, 5), Crop);
 	}
 }
 
