@@ -10,8 +10,8 @@ string stream = "DoubleEG";
 
 string alignments[], a_labels[];
 alignments.push("2017_01_17"); a_labels.push("2017-01-17");
-//alignments.push("2018_07_17"); a_labels.push("2018-07-17");
 alignments.push("2018_07_24.3"); a_labels.push("2018-07-24.3");
+alignments.push("2018_07_30.5"); a_labels.push("2018-07-30.5");
 
 string cols[], c_labels[];
 cols.push("si_rp2_mu_arm0"); c_labels.push("multi(L) vs.~single(RP2)");

@@ -10,8 +10,8 @@ string stream = "DoubleEG";
 
 string alignments[], a_labels[];
 alignments.push("2017_01_17"); a_labels.push("2017-01-17");
-alignments.push("2018_07_26.1"); a_labels.push("2018-07-26.1");
-alignments.push("2018_07_27.1"); a_labels.push("2018-07-27.1");
+alignments.push("2018_07_24.3"); a_labels.push("2018-07-24.3");
+alignments.push("2018_07_30.5"); a_labels.push("2018-07-30.5");
 
 string cols[], c_labels[];
 cols.push("arm0"); c_labels.push("sector 45 (L)");

@@ -9,8 +9,8 @@ InitDataSets("short");
 string stream = "DoubleEG";
 
 //string alignment = "2018_07_17";
-//string alignment = "2018_07_26.1";
-string alignment = "2018_07_27.1";
+//string alignment = "2018_07_24.3";
+string alignment = "2018_07_30.5";
 
 string cols[], c_labels[];
 cols.push("arm0"); c_labels.push("sector 45 (L)");
@@ -48,7 +48,7 @@ for (int fi : fill_data.keys)
 			//hist.vExec("Rebin2D", 2, 2);
 
 			//string f = topDir + dataset + "/" + stream + "/alignment_" + alignment + "/do_fits.root";
-			//string on = "multiRPPlots/" + cols[ci] + "/p_th_x_vs_xi|ff_pol1";
+			//string on = "multiRPPlots/" + cols[ci] + "/p_vtx_y_vs_xi|ff_pol1";
 			//RootObject fit = RootGetObject(f, on);
 
 			draw(scale(1., 1e3), hist);

@@ -15,7 +15,7 @@ string stream = "DoubleEG";
 
 //string alignment = "2018_07_17";
 //string alignment = "2018_07_24.3";
-string alignment = "2018_07_26.1";
+string alignment = "2018_07_30.5";
 
 string cols[], c_labels[];
 cols.push("arm0"); c_labels.push("sector 45 (L)");
