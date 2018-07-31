@@ -78,8 +78,8 @@ queue="8nh"
 
 alignments=(
 	"2017_01_17"
-	"new"
-	#"2018_07_17"
+	"2018_07_24.3"
+	"2018_07_30.5"
 )
 
 SubmitOneGroup "reduction_margin" "data_eos/phys_margin"

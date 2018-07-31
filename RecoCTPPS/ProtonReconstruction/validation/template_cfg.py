@@ -20,7 +20,7 @@ process.source = cms.Source("PoolSource",
 $input
 
 process.maxEvents = cms.untracked.PSet(
-  input = cms.untracked.int32(10000)
+  input = cms.untracked.int32(-1)
 )
 
 process.load("RecoCTPPS.ProtonReconstruction.ctppsProtonReconstruction_cfi")
@@ -30,7 +30,8 @@ process.ctppsProtonReconstruction.alignmentFile = "RecoCTPPS/ProtonReconstructio
 process.ctppsProtonReconstructionPlotter = cms.EDAnalyzer("CTPPSProtonReconstructionPlotter",
     tagTracks = cms.InputTag("ctppsLocalTrackLiteProducer"),
     tagRecoProtons = cms.InputTag("ctppsProtonReconstruction"),
-    outputFile = cms.string("$output")
+    outputFile = cms.string("$output"),
+    maxNonEmptyEvents = cms.untracked.int32(200000)
 )
 
 process.p = cms.Path(
