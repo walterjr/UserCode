@@ -38,9 +38,10 @@ yTicksDef = RightTicks(50., 10.);
 //----------------------------------------------------------------------------------------------------
 
 NewPad(false);
+label("\vbox{\hbox{stream: " + stream + "}}");
+
 for (int ci : cols.keys)
 	NewPadLabel(c_labels[ci]);
-
 
 for (int ai : alignments.keys)
 {

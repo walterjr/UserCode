@@ -3,13 +3,21 @@ import pad_layout;
 
 string topDir = "../../data_eos/";
 
-string dataset = "phys_margin/fill_4947/DoubleEG/alignment_2018_07_24.3";
-//string dataset = "phys_no_margin/fill_5261/DoubleEG/alignment_2018_07_24.3";
+string dataset = "phys_margin/fill_4947";
 
-string f = topDir + dataset + "/output.root";
+string stream = "DoubleEG";
+
+string alignment = "2018_07_24.3";
+
+string f = topDir + dataset + "/" + stream + "/alignment_" + alignment + "/output.root";
 
 xSizeDef = 10cm;
 xTicksDef = LeftTicks(0.05, 0.01);
+
+//----------------------------------------------------------------------------------------------------
+
+NewPad(false);
+label("\vbox{\hbox{dataset: " + replace(dataset, "_", "\_") + "}\hbox{stream: " + stream + "}\hbox{alignment: " + replace(alignment, "_", "\_") + "}}");
 
 //----------------------------------------------------------------------------------------------------
 

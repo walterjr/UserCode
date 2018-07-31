@@ -12,17 +12,19 @@ string cols[], c_labels[];
 cols.push("arm0"); c_labels.push("sector 45 (L)");
 cols.push("arm1"); c_labels.push("sector 56 (R)");
 
-string dataset = "phys_margin/fill_4947/DoubleEG";
-//string dataset = "phys_no_margin/fill_5261/DoubleEG";
+string dataset = "phys_margin/fill_4947";
+
+string stream = "DoubleEG";
 
 TH2_palette = Gradient(blue, heavygreen, yellow, red);
 
 //----------------------------------------------------------------------------------------------------
 
 NewPad(false);
+label("\vbox{\hbox{stream: " + stream + "}\hbox{dataset: " + replace(dataset, "_", "\_") + "}}");
+
 for (int ci : cols.keys)
 	NewPadLabel(c_labels[ci]);
-
 
 for (int ai : alignments.keys)
 {
@@ -34,10 +36,14 @@ for (int ai : alignments.keys)
 	{
 		NewPad("$\xi_{\rm multi}$", "$\th^*_y\ung{\mu rad}$");
 
-		string f = topDir + dataset + "/alignment_" + alignments[ai] + "/output.root";
+		string f = topDir + dataset + "/" + stream + "/alignment_" + alignments[ai] + "/output.root";
 		string on = "multiRPPlots/" + cols[ci] + "/h2_th_y_vs_xi";
 
-		RootObject obj = RootGetObject(f, on);
+		RootObject obj = RootGetObject(f, on, error = false);
+
+		if (!obj.valid)
+			continue;
+
 		obj.vExec("Rebin2D", 2, 2);
 
 		draw(scale(1., 1e6), obj);

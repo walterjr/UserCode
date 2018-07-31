@@ -24,6 +24,8 @@ TH2_palette = Gradient(blue, heavygreen, yellow, red);
 //----------------------------------------------------------------------------------------------------
 
 NewPad(false);
+label("\vbox{\hbox{stream: " + stream + "}\hbox{alignment: " + replace(alignment, "_", "\_") + "}}");
+
 for (int ci : cols.keys)
 	NewPadLabel(c_labels[ci]);
 

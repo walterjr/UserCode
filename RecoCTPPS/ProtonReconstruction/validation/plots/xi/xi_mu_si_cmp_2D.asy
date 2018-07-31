@@ -23,11 +23,9 @@ TH2_palette = Gradient(blue, heavygreen, yellow, red);
 
 //----------------------------------------------------------------------------------------------------
 
-NewPad(replace(dataset + ", " + stream, "_", "\_"));
-
-NewRow();
-
 NewPad(false);
+label("\vbox{\hbox{stream: " + stream + "}\hbox{dataset: " + replace(dataset, "_", "\_") + "}}");
+
 for (int ci : cols.keys)
 	NewPadLabel(c_labels[ci]);
 

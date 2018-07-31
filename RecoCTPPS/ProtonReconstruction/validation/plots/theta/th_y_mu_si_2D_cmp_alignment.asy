@@ -3,7 +3,7 @@ import pad_layout;
 
 string topDir = "../../data_eos/";
 
-string dataset = "phys_no_margin/fill_5027";
+//string dataset = "phys_no_margin/fill_5027";
 string dataset = "phys_no_margin/fill_5261";
 
 string stream = "DoubleEG";
@@ -23,7 +23,8 @@ TH2_palette = Gradient(blue, heavygreen, yellow, red);
 
 //----------------------------------------------------------------------------------------------------
 
-NewPad(replace(dataset + ", " + stream, "_", "\_"));
+NewPad(false);
+label("\vbox{\hbox{stream: " + stream + "}\hbox{dataset: " + replace(dataset, "_", "\_") + "}}");
 
 NewRow();
 
