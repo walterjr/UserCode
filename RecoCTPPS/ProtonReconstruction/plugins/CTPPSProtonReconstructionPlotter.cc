@@ -128,6 +128,18 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
 
       void Init()
       {
+        std::vector<double> v_t_bin_edges;
+        for (double t = 0; t <= 5.; )
+        {
+          v_t_bin_edges.push_back(t);
+          const double de_t = 0.05 + 0.09 * t + 0.02 * t*t;
+          t += de_t;
+        }
+
+        double *t_bin_edges = new double[v_t_bin_edges.size()];
+        for (unsigned int i = 0; i < v_t_bin_edges.size(); ++i)
+          t_bin_edges[i] = v_t_bin_edges[i];
+
         h_chi_sq = new TH1D("", ";#chi^{2}", 100, 0., 0.);
         h_chi_sq_norm = new TH1D("", ";#chi^{2}/ndf", 100, 0., 5.);
 
@@ -138,19 +150,21 @@ class CTPPSProtonReconstructionPlotter : public edm::one::EDAnalyzer<>
 
         h_vtx_y = new TH1D("", ";vtx_{y}   (mm)", 100, -2., +2.);
 
-        h_t = new TH1D("", ";|t|   (GeV^2)", 100, 0., 5.);
-        h_t_xi_range1 = new TH1D("", ";|t|   (GeV^2)", 100, 0., 5.);
-        h_t_xi_range2 = new TH1D("", ";|t|   (GeV^2)", 100, 0., 5.);
-        h_t_xi_range3 = new TH1D("", ";|t|   (GeV^2)", 100, 0., 5.);
+        h_t = new TH1D("", ";|t|   (GeV^2)", v_t_bin_edges.size() - 1, t_bin_edges);
+        h_t_xi_range1 = new TH1D("", ";|t|   (GeV^2)", v_t_bin_edges.size() - 1, t_bin_edges);
+        h_t_xi_range2 = new TH1D("", ";|t|   (GeV^2)", v_t_bin_edges.size() - 1, t_bin_edges);
+        h_t_xi_range3 = new TH1D("", ";|t|   (GeV^2)", v_t_bin_edges.size() - 1, t_bin_edges);
 
         h2_th_x_vs_xi = new TH2D("", ";#xi;#theta_{x}   (rad)", 100, 0., 0.2, 100, -500E-6, +500E-6);
         h2_th_y_vs_xi = new TH2D("", ";#xi;#theta_{y}   (rad)", 100, 0., 0.2, 100, -500E-6, +500E-6);
         h2_vtx_y_vs_xi = new TH2D("", ";#xi;vtx_{y}   (mm)", 100, 0., 0.2, 100, -500E-3, +500E-3);
-        h2_t_vs_xi = new TH2D("", ";#xi;|t|   (GeV^2)", 100, 0., 0.2, 100, 0., 5.);
+        h2_t_vs_xi = new TH2D("", ";#xi;|t|   (GeV^2)", 100, 0., 0.2, v_t_bin_edges.size() - 1, t_bin_edges);
 
         p_th_x_vs_xi = new TProfile("", ";#xi;#theta_{x}   (rad)", 100, 0., 0.2);
         p_th_y_vs_xi = new TProfile("", ";#xi;#theta_{y}   (rad)", 100, 0., 0.2);
         p_vtx_y_vs_xi = new TProfile("", ";#xi;vtx_{y}   (mm)", 100, 0., 0.2);
+
+        delete[] t_bin_edges;
       }
 
       void Fill(const reco::ProtonTrack &p)

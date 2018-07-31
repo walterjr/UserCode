@@ -60,7 +60,7 @@ for (int ri : rows.keys)
 
 				draw(hist, "N,eb", p);
 
-				limits((0, 1e-2), (3, 5), Crop);
+				limits((0, 1e-2), (4, 5), Crop);
 			}
 		}
 	}
